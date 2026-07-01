@@ -36,6 +36,7 @@
   * [Filter the query](querying/the-collection-object/filter-the-query-1/README.md)
     * [Filter the query – The Expression Engine](querying/the-collection-object/filter-the-query-1/filter-the-query.md)
     * [Find, First, Last, Offset, Limit](querying/the-collection-object/filter-the-query-1/find-first.md)
+    * [Pagination](querying/the-collection-object/filter-the-query-1/pagination.md)
     * [Aggregation](querying/the-collection-object/filter-the-query-1/aggregation.md)
     * [Ordering & Group by](querying/the-collection-object/filter-the-query-1/ordering.md)
   * [Fetching the query](querying/the-collection-object/fetching-the-query/README.md)
