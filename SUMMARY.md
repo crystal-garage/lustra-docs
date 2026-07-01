@@ -19,6 +19,7 @@
   * [has\_one](model/associations/has\_one.md)
 * [Lifecycle](model/lifecycle/README.md)
   * [Persistence](model/lifecycle/persistence.md)
+  * [JSON Assignment](model/lifecycle/json-assignment.md)
   * [Validations](model/lifecycle/validations.md)
   * [Triggers](model/lifecycle/callbacks.md)
 * [Polymorphic Models](model/polymorphic-models.md)
