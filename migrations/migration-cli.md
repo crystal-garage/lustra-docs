@@ -1,52 +1,123 @@
 # Migration CLI
 
-## Available Commands
+Lustra provides CLI commands for generating migration files and applying database migrations. Your application must load its database configuration and migration files in the CLI entrypoint you run.
 
-There are a few commands that makes it a more enjoyable experience to your everyday usage of Lustra ORM.
+## Generate A Migration
 
-### Generators
-
-The model and scaffold generators will create migrations appropriate for adding a new model. Lustra ORM provides a consice DSL for defining migrations, but these can also be generated via the CLI.
+Use `lustra generate migration` to create a migration file under `src/db/migrations`.
 
 ```bash
-Usage:
-  lustra generate [flags...] [arg...]
-
-Generate code automatically
-
-Flags:
-  --help         # Displays help for the current command.
-  --no-color     # Cancel color output
-  --verbose, -v  # Display verbose informations during execution
-
-Subcommands:
-  migration      # Generate a new migration
-  model          # Create a new model and the first migration
-  new:kemal      # Create a new project with Kemal
+lustra generate migration add_users
 ```
 
-### Migration
+The generator creates a timestamped file like:
 
-Migrations are a convenient way to alter the database schema over time in a consistent and easy way. Lustra ORM provides a beautiful DSL so that you don't have to write SQL by hand, allowing your schema and changes to be database independent.
+```text
+src/db/migrations/202607010001_add_users.cr
+```
+
+Generated migration files include the migration module and an empty `change` method.
+
+```crystal
+class AddUsers
+  include Lustra::Migration
+
+  def change(dir)
+    # TODO: Fill migration
+  end
+end
+```
+
+Use `--directory` or `-d` to generate files in another project directory.
 
 ```bash
-Usage:
-  lustra migrate [flags...] [arg...]
-
-Manage migration state of your database
-
-Flags:
-  --help         # Displays help for the current command.
-  --no-color     # Cancel color output
-  --verbose, -v  # Display verbose informations during execution
-
-Subcommands:
-  down           # Downgrade your database to a specific migration version
-  migrate
-  rollback       # Rollback the last up migration
-  seed           # Call the seeds data
-  set
-  status         # Return the current state of the database
-  up             # Upgrade your database to a specific migration version
+lustra generate migration add_users --directory ./my_app
 ```
 
+## Generate A Model And Migration
+
+Use `lustra generate model` to create a model file and its first migration.
+
+```bash
+lustra generate model User email:string name:string
+```
+
+The generator writes files under:
+
+```text
+src/models/user.cr
+src/db/migrations/<timestamp>_create_users.cr
+```
+
+Review generated migrations before running them, especially when you want custom indexes, constraints, or column options.
+
+## Apply Migrations
+
+Running `lustra migrate` with no subcommand applies all pending migrations.
+
+```bash
+lustra migrate
+```
+
+The explicit subcommand does the same thing.
+
+```bash
+lustra migrate migrate
+```
+
+## Migration Status
+
+Use `status` to print all registered migrations and whether each one is applied.
+
+```bash
+lustra migrate status
+```
+
+## Move One Migration
+
+Use `up` or `down` with a migration id to force one migration in that direction.
+
+```bash
+lustra migrate up 202607010001
+lustra migrate down 202607010001
+```
+
+These commands fail when the migration is already in the requested state.
+
+## Move To A Version
+
+Use `set` to move the database to a target migration id.
+
+```bash
+lustra migrate set 202607010001
+```
+
+By default, `set` may apply and roll back migrations as needed. Use `--direction` to restrict the operation.
+
+```bash
+lustra migrate set 202607010001 --direction up
+lustra migrate set 202607010001 --direction down
+lustra migrate set 202607010001 --direction both
+```
+
+## Roll Back
+
+Use `rollback` to roll back the last applied migration.
+
+```bash
+lustra migrate rollback
+```
+
+Pass a number to roll back more than one migration.
+
+```bash
+lustra migrate rollback 3
+```
+
+## Seeds
+
+Use `seed` to run registered seed data.
+
+```bash
+lustra migrate seed
+```
