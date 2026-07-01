@@ -60,6 +60,8 @@ Then create PostgreSQL trigger functions in a migration:
 
 ```crystal
 execute <<-SQL
+  -- Keep tsv in sync when inserting a new repository.
+  -- It computes a weighted vector from repository name and description.
   CREATE OR REPLACE FUNCTION tsv_trigger_insert_repositories() RETURNS trigger AS $$
   begin
     new.tsv :=
@@ -71,6 +73,9 @@ execute <<-SQL
   SQL
 
 execute <<-SQL
+  -- Rebuild tsv on UPDATE of repository rows.
+  -- It uses current repository fields plus all joined tag names,
+  -- so changes in title/body or related tags can affect search ranking.
   CREATE OR REPLACE FUNCTION tsv_trigger_update_repositories() RETURNS trigger AS $$
   begin
     SELECT setweight(to_tsvector('pg_catalog.simple', coalesce(r.name, '')), 'A') ||
@@ -92,6 +97,7 @@ Attach the functions to the table:
 
 ```crystal
 execute <<-SQL
+  -- Fire on INSERT so a new row always has an initial tsvector value.
   CREATE TRIGGER tsv_insert_repositories BEFORE INSERT
     ON repositories
     FOR EACH ROW
@@ -99,6 +105,7 @@ execute <<-SQL
   SQL
 
 execute <<-SQL
+  -- Fire on UPDATE so full-text content reflects changed repository data.
   CREATE TRIGGER tsv_update_repositories BEFORE UPDATE
     ON repositories
     FOR EACH ROW
