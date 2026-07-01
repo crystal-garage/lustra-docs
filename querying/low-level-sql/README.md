@@ -30,6 +30,34 @@ affected = Lustra::SQL.update(:users)
 
 `Lustra::SQL.execute(sql)` can run a raw SQL string directly. Prefer the query builders or parameterized raw fragments when user-provided values are involved.
 
+## Query Plans
+
+Use `explain` to inspect PostgreSQL's plan for a query.
+
+```crystal
+plan = User.query
+  .where(active: true)
+  .order_by(created_at: :desc)
+  .explain
+
+puts plan
+```
+
+Use `explain_analyze` when you need actual execution timing and row counts:
+
+```crystal
+plan = User.query
+  .where(active: true)
+  .order_by(created_at: :desc)
+  .explain_analyze
+
+puts plan
+```
+
+`explain_analyze` runs the query. Be careful with write queries because
+PostgreSQL executes them to collect the plan statistics. For write-query
+investigation, use a transaction and roll it back.
+
 ## Reporting Queries
 
 Use `Lustra::SQL` when a query returns report data instead of model records.
