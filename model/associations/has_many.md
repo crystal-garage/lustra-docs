@@ -55,6 +55,44 @@ category.posts << Post.new({name: "A good post"})
 
 Lustra sets the relation foreign key and saves the appended record.
 
+## Autosave
+
+By default, `build` creates an unsaved child record and does not save it when
+the parent is saved.
+
+```crystal
+class Category
+  include Lustra::Model
+
+  has_many posts : Post
+end
+
+category = Category.new({name: "Technology"})
+category.posts.build({name: "Draft"})
+category.save!
+
+category.posts.count # => 0
+```
+
+Use `autosave: true` when built child records should be saved with the parent.
+
+```crystal
+class Category
+  include Lustra::Model
+
+  has_many posts : Post, autosave: true
+end
+
+category = Category.new({name: "Technology"})
+category.posts.build({name: "Draft"})
+category.save!
+
+category.posts.count # => 1
+```
+
+Autosave applies to records built through the association collection. Appending
+with `<<` still saves the appended record immediately.
+
 ## Eager Loading
 
 Collections get a generated `with_posts` helper:

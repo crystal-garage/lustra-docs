@@ -88,6 +88,34 @@ post.tags.unlink(tag)
 
 Call `unlink` on the relation collection (`post.tags`), not on a plain `Tag.query`, so Lustra knows which parent and through table to use.
 
+## Autosave
+
+By default, `build` creates an unsaved associated record and does not save it
+when the parent is saved.
+
+Use `autosave: true` when records built through the association should be saved
+with the parent and linked through the join table.
+
+```crystal
+class Post
+  include Lustra::Model
+
+  primary_key
+  column name : String
+
+  has_many tags : Tag, through: PostTag, autosave: true
+end
+
+post = Post.new({name: "Lustra guide"})
+post.tags.build({name: "orm"})
+post.save!
+
+post.tags.count # => 1
+```
+
+Autosave applies to records built through the association collection. Appending
+with `<<` still saves or links the appended record immediately.
+
 ## `DISTINCT` and Advanced Queries
 
 `has_many through` queries use `DISTINCT` to avoid returning the same target
