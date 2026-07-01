@@ -1,62 +1,125 @@
-# Find, First, Last, Offset, Limit
+# Find, First, Last, Offset, and Limit
 
-You may want to fetch one model instead of a collection.
+These helpers fetch one record, a small slice of records, or refine pagination.
 
-## Find
+## `find` and `find!`
 
-`Collection#find` allows to fetch a model based on an expression.
+`find` looks up records by primary key.
 
-There's two flavors for `find` method: `find` and `find!` . The first one return a nilable type, which will be `nil` if not found, while the second return a model or throw an exception if not found.
-
-### Example
-
-```ruby
-p = Product.query.find({id: 1234}) # Return Product?
-
-p = Product.query.find!{ id == 1234 } # Return Product or throw an exception if not found.
+```crystal
+product = Product.query.find(1234)  # Product?
+product = Product.query.find!(1234) # Product or raises
 ```
 
-## First / Last
+`find` returns `nil` when no row exists. `find!` raises `Lustra::SQL::RecordNotFoundError`.
 
-First and last return the first and last row of a SELECT query.
+You can also pass an array of primary keys:
 
-In the case of first, it will order by `[primary key column] ASC` if no `order_by` directive is found. In the case of last, it will invert the direction of the order directive, turning each `ASC` to `DESC` and vice-versa before performing the call.
-
-Both return a model instead of an enumeration of models.
-
-```ruby
-# SELECT * FROM products ORDER BY created_at ASC LIMIT 1
-p = Product.query.order_by("created_at", "DESC").last!
-
-# SELECT * FROM products ORDER BY created_at DESC LIMIT 1
-p = Product.query.order_by("created_at", "DESC").first!
+```crystal
+products = Product.query.find([1, 2, 3])  # Array(Product)
+products = Product.query.find!([1, 2, 3]) # raises if any id is missing
 ```
 
-{% hint style="info" %}
-Like with `find`,  `first!`/`first` and `last`/`last!` are existing variant of the method
-{% endhint %}
+## `find_by` and `find_by!`
 
-## Offset and Limit
+`find_by` applies a condition and returns the first matching record:
 
-Offset and limit provide a way to scope a request or do some pagination.
-
-### Offset
-
-```ruby
-Product.query.order_by("id").limit(5).offset(5)
+```crystal
+user = User.query.find_by(email: "user@example.com")
+user = User.query.find_by { (active == true) & (email == "user@example.com") }
 ```
 
-The code above will fetch the model from position `5 .. 10` of the query.
+`find_by` returns `nil` when no row exists. `find_by!` raises:
 
-It is possible to write the same behavior as above by using `[]` operator:
-
-```ruby
-products = Product.query.order_by("id")[5..10]
+```crystal
+user = User.query.find_by!(email: "user@example.com")
 ```
 
-{% hint style="warning" %}
-Nothing to be aware:  `[]` operator will resolve the query, calling it and return an Array of model, not a Collection object anymore.
+Model classes expose shortcuts:
 
-You may use the `[]` operator with a number as parameter instead of range. In this case, it's equivalent to `offset(number).first!`. The `[]?` operator is equivalent to `offset(number).first` and will return `nilable` reference.
-{% endhint %}
+```crystal
+User.find_by(email: "user@example.com")
+User.find_by!(email: "user@example.com")
+```
 
+## `first` and `first!`
+
+`first` returns the first matching record or `nil`:
+
+```crystal
+product = Product.query.order_by(created_at: "DESC").first
+```
+
+`first!` returns the record or raises `Lustra::SQL::RecordNotFoundError`:
+
+```crystal
+product = Product.query.order_by(created_at: "DESC").first!
+```
+
+When no explicit order is set, Lustra applies primary-key ordering before fetching the first row.
+
+## `last` and `last!`
+
+`last` returns the last record according to the current ordering:
+
+```crystal
+product = Product.query.order_by(created_at: "DESC").last
+```
+
+`last!` raises when no row exists:
+
+```crystal
+product = Product.query.order_by(created_at: "DESC").last!
+```
+
+`last` works by reversing the current order and fetching one row. If no order is set, Lustra uses primary-key ordering.
+
+## `limit` and `offset`
+
+`limit` and `offset` refine the collection:
+
+```crystal
+products = Product.query
+  .order_by(id: "ASC")
+  .limit(20)
+  .offset(40)
+```
+
+This fetches up to 20 records after skipping 40 records.
+
+Because collections are mutable, `limit` and `offset` change the collection they are called on. Use `dup` if you need to keep a reusable base query:
+
+```crystal
+base = Product.query.order_by(id: "ASC")
+page_1 = base.dup.limit(20).offset(0)
+page_2 = base.dup.limit(20).offset(20)
+```
+
+## Array-Style Access
+
+`[]` and `[]?` resolve the query. They return records, not reusable collections.
+
+```crystal
+product = Product.query.order_by(id: "ASC")[10]  # Product or raises
+product = Product.query.order_by(id: "ASC")[10]? # Product?
+```
+
+`[]` with a range returns an array:
+
+```crystal
+products = Product.query.order_by(id: "ASC")[10..20] # Array(Product)
+```
+
+Internally, array-style access applies `offset` and `limit` to the collection. If you need to keep the original collection unchanged, call it on a duplicate:
+
+```crystal
+products = Product.query.order_by(id: "ASC")
+slice = products.dup[10..20]
+```
+
+For general array indexing after loading records, use `to_a`:
+
+```crystal
+products = Product.query.order_by(id: "ASC").to_a
+product = products[10]?
+```
