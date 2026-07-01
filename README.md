@@ -1,25 +1,30 @@
-# Welcome to Clear
+# Welcome to Lustra
 
-Welcome to Clear, the ORM specifically developed for PostgreSQL and Crystal Language.
+Welcome to Lustra, an ORM built specifically for PostgreSQL and Crystal.
 
 After reading this guide, you will know:
 
-* How to install and configure Clear for your project
-* How to use Clear to manipulate the data stored in your database
-* How to take advantage of the advanced features of PostgreSQL combined seamlessly with the powerful Crystal Language features
-* How to maintain the coherence of your database through migration and validations. 
+* How to install and configure Lustra for your project
+* How to define models, columns, associations, validations, and lifecycle callbacks
+* How to query PostgreSQL with Lustra collections and the lower-level SQL builder
+* How to use PostgreSQL features such as JSONB, arrays, CTEs, cursors, enums, full-text search, and geometric types
+* How to manage schema changes with migrations and keep database access predictable in production
 
-## What is Clear ?
+## What is Lustra?
 
-Clear is an ORM \(Object Relation Mapping\) built for Crystal language. 
+Lustra is an ORM (Object Relational Mapping) library for Crystal.
 
-It offers the Model layer of your applications. 
+It provides an Active Record style model layer and a composable SQL builder for PostgreSQL applications.
 
-Clear is built especially for PostgreSQL, meaning it's not compatible with MariaDB or SQLite for example. Therefore, it achieves to delivers a tremendous amount of PostgreSQL advanced features out of the box.
+Lustra is PostgreSQL-only. It is not designed for MariaDB, MySQL, or SQLite. This focus lets it expose PostgreSQL-specific features directly instead of hiding them behind a lowest-common-denominator API.
 
-Clear is largely based on Active Record pattern, and freely inspired by [Rails Active Record](https://github.com/rails/rails/tree/master/activerecord) and [Sequel](https://github.com/jeremyevans/sequel). Thus, it follow some philosophical concepts, as:
+Lustra started as a fork of Clear at version 0.8. It is not compatible with later Clear releases. Since the fork, Lustra has evolved as an independent project with newer Crystal compatibility, expanded PostgreSQL support, additional tests, and behavior documented around production use.
 
-* **Convention over configuration:** While it's possible to name your models and key the way you want, linking achieved without any directives in the code by using the default naming convention:
+Lustra is inspired by [Rails Active Record](https://github.com/rails/rails/tree/master/activerecord) and [Sequel](https://github.com/jeremyevans/sequel). Its main goals are:
+
+* **Readable business code:** Model and query APIs should stay close to the application concepts they express.
+* **PostgreSQL-first behavior:** JSONB, arrays, CTEs, cursors, full-text search, enums, UUIDs, and other PostgreSQL features are first-class tools.
+* **Convention over configuration:** Common model, table, and foreign-key names work without extra setup, while explicit names are still supported when needed.
 
 | Crystal | PostgreSQL |
 | :--- | :--- |
@@ -27,9 +32,5 @@ Clear is largely based on Active Record pattern, and freely inspired by [Rails A
 | **belongs\_to** foreign\_object | **COLUMN** foreign\_object\_id : bigint |
 
 {% hint style="info" %}
-If you already works with Ruby on Rails, you will notice that the naming convention follow ActiveRecord pattern.
+If you already know Ruby on Rails, many naming conventions will feel familiar.
 {% endhint %}
-
-* **Multiple way of doing things:** Philosophically, Clear try to reduce the gap between the mind of the developer and the code itself. The code is meant to be read as close to written English as possible. Therefore, there's often multiple way to do things, based on the feeling of the developer writing the code. 
-* **Less boilerplate = more happiness:** The "magic" under Clear allows to write as minimum as possible boilerplate code, like type-checking, validations or even SQL fragment writing.
-

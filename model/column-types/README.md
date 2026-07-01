@@ -1,78 +1,80 @@
-# Defining your model
+# Defining Your Model
 
-Model definition in Clear is done by inclusion of the Clear::Model module in your class. Assuming we have this table in PostgreSQL:
+Model definition in Lustra starts by including `Lustra::Model` in a class and declaring the columns that exist in the PostgreSQL table.
+
+Assume this table:
 
 ```sql
 CREATE TABLE articles (
-   id serial NOT NULL PRIMARY KEY,
-   name text NOT NULL,
-   description text
+  id serial PRIMARY KEY,
+  name text NOT NULL,
+  description text
 );
 ```
 
-The definition of this model is straight forward:
+The matching model can be written as:
 
 {% code title="article.cr" %}
-```ruby
+```crystal
 class Article
-  include Clear::Model
-
-  column name : String
-  column description : String?
+  include Lustra::Model
 
   column id : Int32, primary: true, presence: false
+  column name : String
+  column description : String?
 end
 ```
 {% endcode %}
 
-Cut step by step, this is what happens:
+Step by step:
 
-First, we include all the magic of Clear in our class:
-
-```ruby
-include Clear::Model
+```crystal
+include Lustra::Model
 ```
 
-Second, we define `name` column as String. Clear will map automatically the column to the model attribute. 
+This adds Lustra's model behavior to the class.
 
-```ruby
+```crystal
 column name : String
 ```
 
-Third, we define `description` . We defined `description`as `NULLABLE` in our database. To reflect this choice, we add `Nilable` `?` operator to our column.
+This maps the PostgreSQL `name` column to a Crystal `String` attribute.
 
-```
+```crystal
 column description : String?
 ```
 
-Finally, we define `id` as our primary key for this model. While being declared as `NOT NULL`, the column is defined with a default value in PostgreSQL. Therefore, we tell Clear to not check value presence on save/validate by adding `presence: false` to the column definition.
+This maps the nullable PostgreSQL `description` column to a nilable Crystal attribute.
 
-```ruby
+```crystal
 column id : Int32, primary: true, presence: false
 ```
 
-You may now use your model :
+This declares `id` as the primary key. Because PostgreSQL generates the `serial` value, `presence: false` tells Lustra not to require the value before insert.
 
-```ruby
-a = Article.new({name: "A superb article!" })
-a.description = "This is a master piece!"
-a.save!
+You can then use the model:
 
-puts "Article has been properly saved as id=#{a.id}"
+```crystal
+article = Article.new({name: "A superb article!"})
+article.description = "This is a masterpiece."
+article.save!
+
+puts "Article saved as id=#{article.id}"
 ```
 
-By default, Clear will inflect the model name and use plural lower case version of the model name as table name \(here `articles`\).
+By default, Lustra infers the table name from the model name. `Article` maps to `articles`.
 
-You may want to override this behavior, by redefining `self.table` :
+You can override the table name:
 
-```ruby
+```crystal
 class Model::Customer
-  include Clear::Model
+  include Lustra::Model
 
-  self.table = "clients" #< Different from infered "model_customers" table.
-  # ...
+  self.table = "clients"
+
+  column id : Int64, primary: true, presence: false
+  column name : String
 end
 ```
 
-Next article is covering deeply the column definition and its subtleties.
-
+The next page covers column options in more detail.

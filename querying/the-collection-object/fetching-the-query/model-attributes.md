@@ -1,38 +1,53 @@
-# Model extra attributes
+# Custom Selected Fields
 
-In some case you may want to access a column which is not owned by the model itself. This can be provided by access `attributes` hash on the model.  
-In this case, you should set the optional argument `fetch_columns` to `true` during the fetching:
+Sometimes a query selects fields that do not belong to the model itself: aggregate values, computed fields, or columns from joined tables.
 
-In the example below, we want to display a the identification document `type` and `number` for each person:
+Use `fetch_columns: true` to keep those values in the model's `attributes` hash.
 
-```ruby
-People.query.left_join("identification_documents"){ 
-    peoples.id == identification_documents.person_id
-}.select(
-    "people.*", 
-    "identification_documents.type AS doc_type",
-    "identification_documents.number AS doc_number"
-).each(fetch_columns: true) do |x|
-    puts "Person #{x.full_name}: " +
-         "#{x.attributes["doc_type"]} - #{x.attributes["doc_number"]}"
+```crystal
+posts = Post.query
+  .select(
+    "posts.*",
+    "COUNT(comments.id) AS comments_count"
+  )
+  .left_join(:comments) { comments.post_id == posts.id }
+  .group_by("posts.id")
+
+posts.each(fetch_columns: true) do |post|
+  puts "#{post.title}: #{post.attributes["comments_count"]}"
 end
 ```
 
-The optional parameter fetch\_columns is available in most of the methods where we fetch to one or multiple models.
+You can also use `[]` and `[]?` on the model:
+
+```crystal
+post["comments_count"]  # raises if the key is missing
+post["comments_count"]? # nil if the key is missing
+```
+
+`fetch_columns: true` is available on model-fetching helpers such as:
+
+* `each`
+* `map`
+* `to_a`
+* `first` / `first!`
+* `last` / `last!`
+* `find_by` / `find_by!`
+* `[]`, `[]?`, and range access
+* `each_with_cursor`
 
 {% hint style="info" %}
-`fetch_columns` reduces slightly the performance of the ORM, and that's why it's set to `false` by default.
+`fetch_columns: true` stores every returned SQL field in `attributes`, so it has extra allocation cost. Leave it disabled unless you need custom selected fields.
 {% endhint %}
 
-This can be combined also with aggregate functions access, like counter:
+If you only need raw rows and not models, use `fetch` instead:
 
-```ruby
-customers = Customer.query
-    .join("shippings"){ shippings.customer_id == customer.id  }
-    .select("customers.*", "COUNT(shippings.*) as shipping_count")
-
-customers.each(fetch_columns: true) do |x|
-    puts "customer #{x.id} => #{x.attributes["shipping_count"]}"
-end
+```crystal
+Post.query
+  .select("posts.id", "COUNT(comments.id) AS comments_count")
+  .left_join(:comments) { comments.post_id == posts.id }
+  .group_by("posts.id")
+  .fetch do |row|
+    puts row["comments_count"]
+  end
 ```
-

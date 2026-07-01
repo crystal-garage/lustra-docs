@@ -1,6 +1,6 @@
 # Table of contents
 
-* [Welcome to Clear](README.md)
+* [Welcome to Lustra](README.md)
 
 ## Introduction
 
@@ -21,10 +21,11 @@
   * [Persistence](model/lifecycle/persistence.md)
   * [Validations](model/lifecycle/validations.md)
   * [Triggers](model/lifecycle/callbacks.md)
-* [Batchs operations](model/batchs-operations/README.md)
+* [SQL Views and Read-Only Models](model/sql-views.md)
+* [Batch operations](model/batchs-operations/README.md)
   * [Bulk update](model/batchs-operations/bulk-update.md)
   * [Bulk insert & delete](model/batchs-operations/bulk-insert.md)
-* [Transactions & Save Points](model/transactions-and-save-points/README.md)
+* [Transactions & Savepoints](model/transactions-and-save-points/README.md)
   * [Transaction & Savepoints](model/transactions-and-save-points/transaction.md)
   * [Connection pool](model/transactions-and-save-points/connection-pool.md)
 * [Locks](model/locks.md)
@@ -48,6 +49,7 @@
 * [Writing low-level SQL](querying/low-level-sql/README.md)
   * [Select Clause](querying/low-level-sql/select-clause.md)
   * [Insert Clause](querying/low-level-sql/insert-clause.md)
+  * [Update Clause](querying/low-level-sql/update-clause.md)
   * [Delete Clause](querying/low-level-sql/delete-clause.md)
 
 ## Migrations
@@ -59,16 +61,17 @@
 ## Additional and advanced features
 
 * [JSONB](additional-and-advanced-features/jsonb.md)
+* [Array Querying](additional-and-advanced-features/array-querying.md)
 * [Symbol vs String](additional-and-advanced-features/symbol-vs-string.md)
 * [Enums](additional-and-advanced-features/enums.md)
 * [BCrypt](additional-and-advanced-features/bcrypt.md)
 * [Full Text Search](additional-and-advanced-features/full-text-search.md)
-* [Handling multi-connection](additional-and-advanced-features/handling-multi-connection.md)
+* [Geometric Types](additional-and-advanced-features/geometric-types.md)
+* [Handling multiple connections](additional-and-advanced-features/handling-multi-connection.md)
 
 ## Other resources
 
-* [API Documentation](https://crystal-garage.gitbook.io/clear/)
-* [Inline documentation](https://crystal-garage.github.io/clear/)
-* [Github repository](https://github.com/crystal-garage/clear)
-* [Contributors](https://github.com/crystal-garage/clear/graphs/contributors)
-* [Benchmark](other-resources/benchmark.md)
+* [API Documentation](https://crystal-garage.github.io/lustra/)
+* [Inline documentation](https://crystal-garage.github.io/lustra/)
+* [GitHub repository](https://github.com/crystal-garage/lustra)
+* [Contributors](https://github.com/crystal-garage/lustra/graphs/contributors)

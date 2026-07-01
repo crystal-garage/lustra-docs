@@ -1,83 +1,121 @@
 # Full Text Search
 
-Full text search plugin offers full integration with `tsvector` capabilities of Postgresql.
+Lustra integrates with PostgreSQL `tsvector` search through migration helpers and a model macro.
 
-It allows you to query models through the text content of one or multiple fields.
+## Migration
 
-Let's assume we have a blog and want to implement full text search over title and content:
+Use `t.full_text_searchable` inside `create_table`.
 
-```ruby
-  create_table "posts" do |t|
-    t.column :title, :string, null: false
-    t.column :content, :string, null: false
+```crystal
+create_table(:posts) do |t|
+  t.column :title, :string, null: false
+  t.column :content, :string, null: false
 
-    t.full_text_searchable on: [{"title", 'A'}, {"content", 'C'}]
-  end
+  t.full_text_searchable on: [{"title", 'A'}, {"content", 'C'}]
+end
 ```
 
-This migration will create a 3rd column named `full_text_vector` of type `tsvector`, a gin index, a trigger and a function to update automatically this column.
+This creates:
 
-Over the `on` keyword, `'{"title", 'A'}'` means it allows search of the content of "title", with level of priority \(weight\) "A", which tells postgres than title content is more meaningful than the article content itself.
+- a `tsvector` column
+- a GIN index
+- a trigger
+- a trigger function that updates the vector column
 
-Now, let's build some models:
+The default vector column is `full_text_vector`.
 
-```ruby
-  class Post
-    include Clear::Model
-    #...
+For an existing table, use `add_full_text_searchable`.
 
-    full_text_searchable
-  end
-
-  Post.create!({title: "About poney", content: "Poney are cool"})
-  Post.create!({title: "About dog and cat", content: "Cat and dog are cool. But not as much as poney"})
-  Post.create!({title: "You won't believe: She raises her poney like as star!", content: "She's col because poney are cool"})
+```crystal
+add_full_text_searchable(
+  "posts",
+  [{"title", 'A'}, {"content", 'C'}]
+)
 ```
 
-Search is now easily done
+## Model
 
-```ruby
-  Post.query.search("poney") # Return all the articles !
+Add `full_text_searchable` to the model.
+
+```crystal
+class Post
+  include Lustra::Model
+
+  column title : String
+  column content : String
+
+  full_text_searchable
+end
 ```
 
-Obviously, search call can be chained:
+This defines a `search` scope by default.
 
-```ruby
-  user = User.find!{ email == "some_email@example.com" }
-  Post.query.from_user(user).search("orm")
+```crystal
+Post.query.search("orm")
 ```
 
-## Additional parameters
+Search is chainable.
 
-**catalog**
+```crystal
+user = User.query.find_by! { email == "some_email@example.com" }
+Post.query.from_user(user).search("orm")
+```
 
-Select the catalog to use to build the `tsquery`. By default, `pg_catalog.english` is used.
+## Custom Vector Column
 
-```ruby
-# in your migration:
-t.full_text_searchable on: [{"title", 'A'}, {"content", 'C'}], catalog: "pg_catalog.french"
+Pass the vector column name in the migration and in the model.
 
-# in your model
+```crystal
+create_table(:series) do |t|
+  t.column :title, :string
+  t.column :description, :string
+  t.full_text_searchable on: [{"title", 'A'}, {"description", 'C'}], column_name: "tsv"
+end
+```
+
+```crystal
+class Series
+  include Lustra::Model
+
+  full_text_searchable "tsv"
+end
+```
+
+## Catalog
+
+The default catalog is `pg_catalog.english`.
+
+```crystal
+t.full_text_searchable(
+  on: [{"title", 'A'}, {"content", 'C'}],
+  catalog: "pg_catalog.french"
+)
+```
+
+Use the same catalog in the model macro.
+
+```crystal
 full_text_searchable catalog: "pg_catalog.french"
 ```
 
-{% hint style="info" %}
-For now, Clear doesn't offers dynamic selection of catalog \(for let's say multi-lang service\). If your app need this feature, do not hesitate to open an issue.
-{% endhint %}
+## Custom Scope Name
 
-**trigger\_name, function\_name**
+The model macro accepts a custom scope name.
 
-In migration, you can change the name generated for the trigger and the function, using theses two keys.
+```crystal
+full_text_searchable "full_text_vector", scope_name: "text_search"
 
-**dest\_field**
-
-The field created in the database, which will contains your ts vector. Default is `full_text_vector`.
-
-```ruby
-#in your migration
-t.full_text_searchable on: [{"title", 'A'}, {"content", 'C'}], dest_field: "tsv"
-
-# in your model
-full_text_searchable "tsv"
+Post.query.text_search("crystal")
 ```
 
+## Query Syntax
+
+`search` converts end-user text into a PostgreSQL `to_tsquery` string.
+
+```crystal
+Post.query.search("breaking")
+Post.query.search("break -prison")
+Post.query.search("\"exact phrase\"")
+```
+
+Internally, Lustra uses `Lustra::Model::FullTextSearchable.to_tsq` to escape and join terms.

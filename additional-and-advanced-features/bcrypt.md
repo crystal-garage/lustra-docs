@@ -1,31 +1,47 @@
 # BCrypt
 
-We provide helper for storing encrypted password. See example below:
+Lustra includes a converter for `Crypto::Bcrypt::Password`. Store the encrypted password in a text column and expose a writer that hashes plain text before assignment.
 
-```ruby
+```crystal
 class User
-  include Clear::Model
-  primary_key :id, type: :uuid
-  
+  include Lustra::Model
+
+  primary_key "id", :uuid
+
   column encrypted_password : Crypto::Bcrypt::Password
-  
-  def password=(x)
-    self.encrypted_password = Crypto::Bcrypt::Password.create(x)
-  end  
+
+  def password=(value : String)
+    self.encrypted_password = Crypto::Bcrypt::Password.create(value)
+  end
 end
-
-
-# Create a new user with the password
-User.create!({password: "helloworld"})
-
-#...
-
-# Get the created user
-user = User.query.first
-
-if user.encrypted_password.verify("thisisfalse") # < false
-  #...
-end
-
 ```
 
+Migration:
+
+```crystal
+create_table(:users, id: :uuid) do |t|
+  t.column :encrypted_password, :string, null: false
+end
+```
+
+Create or update a password by assigning a freshly generated bcrypt password.
+
+```crystal
+user = User.create!({encrypted_password: Crypto::Bcrypt::Password.create("secret")})
+
+user.encrypted_password.verify("secret")
+# => true
+
+user.encrypted_password.verify("wrong")
+# => false
+```
+
+With the custom writer:
+
+```crystal
+user = User.new
+user.password = "secret"
+user.save!
+```
+
+Never store the plain text password in a model column.

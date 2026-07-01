@@ -1,88 +1,124 @@
-# Transaction & Savepoints
+# Transaction And Savepoints
 
-Transaction are safeguard to ensure than a list of operation on a database are only permanent if they can all succeed as atomic action.
+Transactions make a group of database operations atomic. If the block raises, Lustra rolls back the transaction. If the block finishes normally, Lustra commits it.
 
-In Clear, the usage of transaction is simple:
-
-```ruby
-Clear::SQL.transaction do
-    yacine.withdraw(100)
-    mary.deposit(100)
+```crystal
+Lustra::SQL.transaction do
+  sender.update!(balance: sender.balance - 100)
+  recipient.update!(balance: recipient.balance + 100)
 end
 ```
 
-In the example above, if one of the method fail, the whole transaction block will be reverted to initial state.
+The block receives the checked-out database connection if you need it.
+
+```crystal
+Lustra::SQL.transaction do |connection|
+  connection.exec("SELECT 1")
+end
+```
+
+## Isolation Levels
+
+`transaction` accepts an isolation level. The default is `Serializable`.
+
+```crystal
+Lustra::SQL.transaction(level: Lustra::SQL::Transaction::Level::ReadCommitted) do
+  User.query.where(active: true).count
+end
+
+Lustra::SQL.transaction(level: Lustra::SQL::Transaction::Level::RepeatableRead) do
+  User.query.where(active: true).count
+end
+
+Lustra::SQL.transaction(level: Lustra::SQL::Transaction::Level::Serializable) do
+  User.query.where(active: true).count
+end
+```
+
+PostgreSQL treats `READ UNCOMMITTED` as `READ COMMITTED`, so Lustra does not expose a separate `ReadUncommitted` value.
 
 ## Rollback
 
-You can manually rollback a transaction if something went wrong:
+Call `Lustra::SQL.rollback` to roll back the current transaction without raising an application error outside the transaction block.
 
-```ruby
-Clear::SQL.transaction do
-    yacine.withdraw(100)
-    Clear::SQL.rollback if mary.is_suspicious?
-    mary.deposit(100)
+```crystal
+Lustra::SQL.transaction do
+  sender.update!(balance: sender.balance - 100)
+
+  if recipient.locked?
+    Lustra::SQL.rollback
+  end
+
+  recipient.update!(balance: recipient.balance + 100)
 end
 ```
 
-In this case, the block will be returned, nothing will be committed in the database and no error will be thrown
+Use `rollback_transaction` when you are inside a savepoint but need to roll back the outer transaction.
 
-## Nested transaction
-
-Nested transaction are not working, but save points are used for that. Let's take an example:
-
-```ruby
-Clear::SQL.transaction do
-    puts "I do something"
-    Clear::SQL.transaction do
-        puts "I do another thing"
-        Clear::SQL.rollback
-        puts "This should not print"
-    end
-    puts "This will never reach too."
+```crystal
+Lustra::SQL.transaction do
+  Lustra::SQL.with_savepoint do
+    Lustra::SQL.rollback_transaction
+  end
 end
 ```
 
-In this case, the output will be:
+## Nested Transactions
 
-```text
-# BEGIN
-I do something
-I do another thing
-# ROLLBACK
+Calling `transaction` inside another `transaction` does not create a nested SQL transaction. Lustra reuses the current transaction connection and yields the inner block.
+
+```crystal
+Lustra::SQL.transaction do
+  User.create!(email: "one@example.com")
+
+  Lustra::SQL.transaction do
+    User.create!(email: "two@example.com")
+  end
+end
 ```
 
-Since **nested transaction are not permitted**, rollback will rollback the top-most transaction. Any nested transaction block will perform SQL-wise, only the block content will be executed.
+If the inner block calls `Lustra::SQL.rollback`, the outer transaction is rolled back.
 
 ## Savepoints
 
-For nested transaction, you may want to use save points:
+Use `with_savepoint` when you need a nested rollback boundary.
 
-```ruby
-Clear::SQL.with_savepoint do
-    puts "I do something"
-    Clear::SQL.with_savepoint do
-        puts "I do another thing"
-        Clear::SQL.rollback
-        puts "This should not print"
-    end
-    puts "Eventually, I do something else"
+```crystal
+Lustra::SQL.transaction do
+  User.create!(email: "one@example.com")
+
+  Lustra::SQL.with_savepoint do
+    User.create!(email: "two@example.com")
+    Lustra::SQL.rollback
+  end
+
+  User.create!(email: "three@example.com")
 end
 ```
 
-In this case, the output will be:
+In this example, the second user is rolled back to the savepoint, while the first and third users can still be committed.
 
-```text
-# BEGIN
-# SAVEPOINT xxx1
-I do something
-# SAVEPOINT xxx2
-I do another thing
-# ROLLBACK TO SAVEPOINT xxx2
-Eventually, I do something else
-# RELEASE SAVEPOINT xxx1
-# COMMIT
+You can name a savepoint when you need to target it explicitly.
+
+```crystal
+Lustra::SQL.with_savepoint(:before_import) do
+  User.create!(email: "imported@example.com")
+  Lustra::SQL.rollback(:before_import)
+end
 ```
 
-As you can see, save points are backed by a transaction block; rollback inside a save point block will rollback the block only and not all the transaction. Any unhandled exception will still rollback the full transaction.
+## After Commit
 
+Use `after_commit` to register work that should run only after the surrounding transaction commits.
+
+```crystal
+Lustra::SQL.transaction do
+  user.update!(confirmed: true)
+
+  Lustra::SQL.after_commit do |_connection|
+    ConfirmationEmailJob.enqueue(user.id)
+  end
+end
+```
+
+`after_commit` raises if it is called outside a transaction.

@@ -1,83 +1,98 @@
 # JSONB
 
-Clear offers JSONB functions through `Clear::SQL::JSONB` helper and the Expression Engine.
+Lustra supports PostgreSQL `jsonb` columns through normal model columns and expression helpers.
 
-JSONB is a great No-SQL mapping under PostgreSQL. It helps you to store value and documents which otherwise would be difficult
+```crystal
+class User
+  include Lustra::Model
 
-Let's imaging a table `events` where you store the events of differents suppliers:
+  column notification_preferences : JSON::Any
+end
+```
 
-## Postgres limitation and Clear's answer
+In migrations, create a `jsonb` column and usually add a GIN index when you query it often.
 
-The main limitation of JSONB is the "simple" syntax is not indexable. For example:
+```crystal
+create_table(:users) do |t|
+  t.column :notification_preferences, :jsonb, index: "gin", default: "'{}'"
+end
+```
+
+## JSONB Paths
+
+Use `jsonb(path)` in query expressions. Dot-separated paths are converted to PostgreSQL JSONB operators.
+
+```crystal
+User.query.where { notification_preferences.jsonb("email.enabled") == true }
+```
+
+For literal equality, Lustra uses the index-friendly `@>` containment form.
 
 ```sql
-  SELECT * FROM events WHERE payload->'source'->>'name' = 'Asana'
+WHERE "notification_preferences" @> '{"email":{"enabled":true}}'
 ```
 
-The code above will not use any indexes and will do a sequencial scan over your table.
+Escape a literal dot in a key with a backslash.
 
-However, using the `@>` operator and a `gin` index on your column will improve drastically the performances:
-
-```sql
-  SELECT * FROM events WHERE payload @> '{"source": {"name": "Asana"}}'
+```crystal
+User.query.where { notification_preferences.jsonb("external\\.id") == "abc" }
 ```
 
-Obviously, the second syntax is more complex and error prone. Clear offers leverage and simplicity:
+## Casting
 
-```ruby
-  Event.query.where{ payload.jsonb("source.name") == "asana" }
-  #  SELECT * FROM events WHERE payload @> '{"source": {"name": "Asana"}}'
+Use `cast` when you need to compare a JSONB path as another SQL type.
+
+```crystal
+User.query.where {
+  notification_preferences.jsonb("email.frequency").cast("text") == "daily"
+}
 ```
 
-## Expression Engine
+Casting uses arrow notation instead of the containment form.
 
-### jsonb
+## Key Existence
 
-calling `node.jsonb(key)` on expression node will resolve to:
+Use the JSONB key helpers for PostgreSQL `?`, `?|`, and `?&`.
 
-* node-&gt;'key\_elm1'-&gt;'key\_elm...n'
+```crystal
+User.query.where { notification_preferences.jsonb_key_exists?("email") }
 
-Using equality testing between a jsonb path and a literal will use the indexable notation `@>` :
+User.query.where {
+  notification_preferences.jsonb_any_key_exists?(["email", "sms"])
+}
 
-```ruby
-where{ data.jsonb('a.b.c') == 1 }
-#output:
-# data @> '{"a":{"b":{"c":1}}}'
+User.query.where {
+  notification_preferences.jsonb_all_keys_exists?(["email", "sms"])
+}
 ```
 
-In the case the operation is not indexable \(e.g. the value is variable, operator is not equality...\), Clear will automatically switch back to the arrow `->` notation:
+You can call key helpers on nested JSONB paths too.
 
-```ruby
-where{ data.jsonb('a.b.c') == raw("NOW()") }
-# output:
-# data->'a'->'b'->'c' = NOW()
+```crystal
+User.query.where {
+  notification_preferences.jsonb("channels").jsonb_key_exists?("email")
+}
 ```
 
-**Casting**
+## JSONB Arrays
 
-You can cast the element using `cast` after your expression:
+Use `contains?` on a JSONB path to test whether an array contains a value.
 
-```ruby
-where{ data.jsonb("a.b").cast("text") == "o" }
-# output:
-# data->'a'->'b'::text == 'o'
+```crystal
+User.query.where {
+  notification_preferences.jsonb("enabled_channels").contains?("email")
+}
 ```
 
-Note: If you cast the `jsonb`, clear will never use `@>` operator
+## Low-Level Helpers
 
-### From path to arrow notation
+`Lustra::SQL::JSONB` exposes helper methods when you need SQL fragments outside the expression engine.
 
-```ruby
-Clear::SQL::JSONB.jsonb_resolve("data", "a.b.c", "text")
-# output:
-# data->'a'->'b'->'c'::text
+```crystal
+include Lustra::SQL::JSONB
+
+jsonb_exists?("notification_preferences", "email")
+jsonb_any_exists?("notification_preferences", ["email", "sms"])
+jsonb_all_exists?("notification_preferences", ["email", "sms"])
+jsonb_eq("notification_preferences", "email.enabled", true)
 ```
-
-## Use outside Expression Engine \(`@>` operator\)
-
-```ruby
-Clear::SQL::JSONB.jsonb_eq(data, "a.b.c", "value")
-#output:
-# data @> {"a":{"b":{"c":"value"}}}
-```
-

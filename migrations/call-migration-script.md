@@ -1,127 +1,77 @@
-# Call migration script
+# Call Migrations From Code
 
-## Call migration script
+You can run migrations directly through `Lustra::Migration::Manager`. This is useful for custom CLIs, test setup, or applications that manage database setup inside Crystal code.
 
-Clear offers a migration system. Migration allow you to handle state update of your database.
+Before calling the manager, initialize the database connection and require your migration files.
 
-Migration is a list of change going through a direction, up \(commit changes\) or down \(rollback changes\).
+```crystal
+require "lustra"
+require "./db/migrations/*"
 
-In clear, a migration is defined like this:
+Lustra::SQL.init(ENV["DATABASE_URL"])
 
-```ruby
-class MyMigration1
-  include Clear::Migration
-
-  def change(direction)
-    direction.up do
-      #do something on commit
-    end
-
-    direction.down do
-      #do something on rollback
-    end
-  end
-end
+Lustra::Migration::Manager.instance.apply_all
 ```
 
-## Executing custom SQL
+## Apply Pending Migrations
 
-The basic usage is to execute your own SQL \(e.g. CREATE TABLE, ALTER, GRANT etc...\).
+`apply_all` applies every registered migration that is not already recorded in `__lustra_metadatas`.
 
-To do it, just call `execute` into your direction block.
-
-### Example
-
-```ruby
-class MyMigration1
-  include Clear::Migration
-
-  def change(direction)
-    direction.up do
-      execute("CREATE TABLE my_models...")
-    end
-
-    direction.down do
-      execute("DROP TABLE my_models")
-    end
-  end
-end
+```crystal
+Lustra::Migration::Manager.instance.apply_all
 ```
 
-## Built-in helpers
+The manager sorts migrations by `uid` before applying them.
 
-Clear offers helpers for simplify declaring your migration
+## Move To A Version
 
-### Creating a table
+Use `apply_to` to move the schema to a specific migration id. Lustra applies missing migrations below that id and rolls back applied migrations above it.
 
-Clear provides DSL looking like ActiveRecord for creating a table.
-
-```ruby
-create_table(:users) do |t|
-    t.column :first_name, :string, index: true
-    t.column :last_name, :string, unique: true
-
-    # Will create a "user_info_id" field of type longint with a foreign key constraint
-    # This reference can be null, and if the user_info is deleted then the user is deleted too.
-    t.references to: "user_infos", name: "user_info_id", on_delete: "cascade", null: true
-
-    # Example of creating index on full name
-    t.index "lower(first_name || ' ' || last_name)", using: :btree
-
-    t.timestamps
-end
+```crystal
+Lustra::Migration::Manager.instance.apply_to(202607010001_i64)
 ```
 
-## Migration ordering
+You can restrict the direction.
 
-Migration should be ordered by a number. This number can be written in different way:
-
-* In case of mixing multiple classes into the same file, you can append the number at the end of the class name:
-
-```ruby
-class Migration1
-  include Clear::Migration
-
-  def change(dir)
-    #...
-  end
-end
+```crystal
+Lustra::Migration::Manager.instance.apply_to(202607010001_i64, direction: :up)
+Lustra::Migration::Manager.instance.apply_to(202607010001_i64, direction: :down)
+Lustra::Migration::Manager.instance.apply_to(202607010001_i64, direction: :both)
 ```
 
-If you're using one file per migration, you can prepend the ordering number at the start of the file name:
+## Force One Migration Up Or Down
 
-```text
-1234_migration.cr
+Use `up` or `down` when you want to run one specific migration by id.
+
+```crystal
+manager = Lustra::Migration::Manager.instance
+
+manager.up(202607010001_i64)
+manager.down(202607010001_i64)
 ```
 
-Finally, if you feel more rock'n'roll and build a complex dynamic migration system on top of Clear, you can override the uid method:
+`up` raises if the migration is already applied. `down` raises if the migration is not applied.
 
-```ruby
-class Migration1
-  include Clear::Migration
+## Status
 
-  def uid
-    123_i64 #Number must be a signed 64bits integer !
-  end
+Use `print_status` to inspect known migrations.
 
-  def change(dir)
-    #...
-  end
-end
+```crystal
+puts Lustra::Migration::Manager.instance.print_status
 ```
 
-## Calling your migration
+The output marks each registered migration as applied or pending.
 
-Clear will offers soon a CLI; meanwhile, you can call migration update using methods in the Migration Manager:
+## Refreshing State
 
-```ruby
-# Activate all the migrations. Will call change with up direction for each down migrations
-Clear::Migration::Manager.instance.apply_all
+The manager keeps migration state in memory after it loads metadata from the database. Use `refresh` to reload the applied migration ids from `__lustra_metadatas`.
+
+```crystal
+Lustra::Migration::Manager.instance.refresh
 ```
 
-```ruby
-# Go to a specific migration. All migration with a number above than the version number will be downed if not yet down.
-# All migrations with a version number below will be activated if not yet up.
-Clear::Migration::Manager.instance.apply_to(version_number)
-```
+Use `reinit!` when tests or external code may have changed the metadata table and you want the manager to recreate/check its internal state.
 
+```crystal
+Lustra::Migration::Manager.instance.reinit!
+```

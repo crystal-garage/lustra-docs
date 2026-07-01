@@ -1,121 +1,120 @@
-# has\_many through
+# `has_many through`
 
-Has many through represents a relation where both side can relate to multiple models.
+`has_many through` connects two models through a join model/table.
 
-Basically, in SQL this can be performed by using a middle-table which store foreign key of both of the classes.
-
-## Usage Example
-
-For example, let's assume we have a table `posts` and a table `tags` which are loosely connected: a post can have multiple `tags` at once, while a tag can references multiple posts. In this example, we will need a middle-table which will be named `post_tags` :
+Example schema:
 
 ```sql
-CREATE TABLE tags (
-    id bigserial NOT NULL PRIMARY KEY, 
-    name text NOT NULL
+CREATE TABLE posts (
+  id bigserial PRIMARY KEY,
+  name text NOT NULL
 );
 
-CREATE UNIQUE INDEX tags_name ON tags (name);
-
-CREATE TABLE posts (
-    id bigserial NOT NULL PRIMARY KEY,
-    name text NOT NULL,
-    content text
+CREATE TABLE tags (
+  id bigserial PRIMARY KEY,
+  name text NOT NULL
 );
 
 CREATE TABLE post_tags (
-    tag_id bigint NOT NULL, 
-    post_id bigint NOT NULL, 
-    FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE CASCADE, 
-    FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
+  post_id bigint NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  tag_id bigint NOT NULL REFERENCES tags(id) ON DELETE CASCADE
 );
 ```
 
-You may notice usage of FOREIGN KEY constraints over post\_tags. Clear doesn't provide any feature for cascading deletion, and relay exclusively on PostgreSQL.
+Define a join model for the join table:
 
-Now, let's define our models:
+```crystal
+class PostTag
+  include Lustra::Model
 
-```ruby
+  self.table = "post_tags"
+
+  belongs_to post : Post, foreign_key_type: Int64?
+  belongs_to tag : Tag, foreign_key_type: Int64?
+end
+```
+
+Then connect the main models through it:
+
+```crystal
 class Post
-  include Clear::Model
+  include Lustra::Model
 
   primary_key
-
   column name : String
-  column content : String?
 
-  has_many tags : Tag, through: "post_tags"
+  has_many tags : Tag, through: PostTag
 end
 
 class Tag
-  include Clear::Model
+  include Lustra::Model
 
   primary_key
-
   column name : String
 
-  has_many tags : Post, through: "post_tags"
+  has_many posts : Post, through: PostTag
 end
 ```
 
-And thats all ! Basically, in this case, we may not want to create a model `PostTag` as the table exists only to make the link between the two models.
+Now `post.tags` returns a `Tag::Collection`:
 
-Addition and deletion is provided in elegant way even without model:
+```crystal
+post = Post.query.first!
 
-{% code title="add\_to\_post.cr" %}
-```ruby
-p = Post.new({name: "My new post"})
-p.save!
-# Add the tag Technology to the post
-p.tags << Tag.query.find_or_create({name: "Technology"}){}
+post.tags.each do |tag|
+  puts tag.name
+end
 ```
-{% endcode %}
 
-p has to be saved in database before linking the tag.
+## Adding and Removing Links
 
-{% code title="delete\_tag.cr" %}
-```ruby
-p = Post.query.first!
+Append creates the target record if needed and inserts the join row when it does not already exist:
 
-tags = p.tags
-tags.unlink( tags.where(name: "Technology").first! )
+```crystal
+post = Post.query.first!
+tag = Tag.query.find_or_create({name: "Technology"}) { }
+
+post.tags << tag
 ```
-{% endcode %}
 
-## Middle-table model
+Unlink deletes the join row:
 
-Optionally, we can define our middle-table model. In this case, you should use the model as through argument :
+```crystal
+post = Post.query.first!
+tag = post.tags.where(name: "Technology").first!
 
-```ruby
-class Post
-  include Clear::Model
+post.tags.unlink(tag)
+```
 
-  class Tag
-    include Clear::Model
+Call `unlink` on the relation collection (`post.tags`), not on a plain `Tag.query`, so Lustra knows which parent and through table to use.
 
-    belongs_to post : Post
-    belongs_to tag : Tag
+## Eager Loading
 
-    self.table = "post_tags"
+`has_many through` also generates a `with_*` helper:
+
+```crystal
+Post.query.with_tags.each do |post|
+  post.tags.each do |tag|
+    puts tag.name
   end
-
-  primary_key
-
-  column name : String
-  column content : String?
-
-  has_many tags : Tag, through: Post::Tag
-end
-
-class Tag
-  include Clear::Model
-
-  primary_key
-
-  column name : String
-
-  has_many tags : Post, through: Post::Tag
 end
 ```
 
-**Note:** The model `Post::Tag` don't have primary key which can lead to issues with Clear. [Feel free to leave issues to the community here.](https://github.com/anykeyh/clear/issues)
+## Options
 
+```crystal
+has_many relation_name : RelationType,
+  through: JoinModel,
+  foreign_key: "target_id",
+  own_key: "owner_id",
+  autosave: true
+```
+
+| Option | Description | Default |
+| :--- | :--- | :--- |
+| `through` | Join model used to connect the two tables. | required |
+| `foreign_key` | Join-table column pointing to the target model. | target table singularized + `_id` |
+| `own_key` | Join-table column pointing to the current model. | current table singularized + `_id` |
+| `autosave` | Saves built association records when the parent is saved. | `false` |
+
+The join model does not need a primary key for simple join-table usage, but it should still map the join table accurately.

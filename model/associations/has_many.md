@@ -1,87 +1,85 @@
-# has\_many
+# `has_many`
 
-Has many represents one of the counter part of [belongs to](belongs_to.md) relation. It assumes the current model is referenced by a collection of another model.
+`has_many` is the inverse of a `belongs_to` relation. The related model stores the foreign key.
 
-Let's see the example used in the chapter [`belongs_to`](belongs_to.md):
+Using the category/post schema from [`belongs_to`](belongs_to.md):
 
-```sql
-CREATE TABLE categories (
-    id bigserial NOT NULL PRIMARY KEY,
-    name text NOT NULL
-)
-
-CREATE TABLE posts (
-    id bigserial NOT NULL PRIMARY KEY,
-    name text NOT NULL,
-    content text,
-    category_id bigint NOT NULL
-)
-```
-
-```ruby
-class Post
-  include Clear::Model
-
-  primary_key
-
-  column name : String
-  column content : String?
-
-  belongs_to category : Category
-end
-
+```crystal
 class Category
-  include Clear::Model
+  include Lustra::Model
 
   primary_key
-
   column name : String
 
   has_many posts : Post
 end
-```
 
-Here, we said a category has many posts. The posts can be accessed through the method `posts` which return a `Collection`:
+class Post
+  include Lustra::Model
 
-```ruby
-c = Category.query.find!{name == "Technology"} # Retrieve the category named Technology
+  primary_key
+  column name : String
 
-c.posts.each do |post|
-    puts "Post name: #{post.name}"
+  belongs_to category : Category
 end
 ```
 
-Note: The relation can be refined after fetching:
+`Category#posts` returns a `Post::Collection`:
 
-```ruby
-# Fetch only the posts which starts by a digit:
-c.posts.where{name =~ /^[0-9]/i}.each do |post|
-    puts "Post name: #{post.name}"
+```crystal
+category = Category.query.find_by! { name == "Technology" }
+
+category.posts.each do |post|
+  puts post.name
 end
 ```
 
-## Customizing the relation
+Because the relation returns a collection, you can refine it before fetching:
 
-Clear uses naming convention to infer the name of the foreign key. You may want to override this behavior by adding some parameters:
+```crystal
+category.posts
+  .where { name =~ /^[0-9]/i }
+  .order_by(name: "ASC")
+  .each do |post|
+    puts post.name
+  end
+```
 
-```ruby
+## Adding Records
+
+You can append a record to a `has_many` relation:
+
+```crystal
+category.posts << Post.new({name: "A good post"})
+```
+
+Lustra sets the relation foreign key and saves the appended record.
+
+## Eager Loading
+
+Collections get a generated `with_posts` helper:
+
+```crystal
+Category.query.with_posts.each do |category|
+  category.posts.each do |post|
+    puts post.name
+  end
+end
+```
+
+The `with_*` helper runs an additional query and fills the relation cache to avoid N+1 queries.
+
+## Options
+
+```crystal
 has_many relation_name : RelationType,
-    foreign_key: "column_name", own_key: "column_name", no_cache: true|false
+  foreign_key: "column_name",
+  primary_key: "column_name",
+  autosave: true
 ```
 
-| Argument | Description | Default value |
-| :---: | :--- | :---: |
-| `foreign_key` | The foreign key which is inside the relative model | `[underscore_model_name]_id` |
-| `own_key` | The key against what the relation is tested, primary key by default | `self.class.__pkey__` |
-| `no_cache` | Never cache the relation \(note: planned feature\) | `false` |
-
-## Adding to relation
-
-An object can be added into the relation collection using `<<` operator:
-
-```ruby
-c.posts << Post.new({name: "A good post"})
-```
-
-In this case, the post is saved during the add operation.
-
+| Option | Description | Default |
+| :--- | :--- | :--- |
+| `foreign_key` | Column stored on the related model. | current table singularized + `_id` |
+| `primary_key` | Column on the current model matched against the foreign key. | model primary key |
+| `autosave` | Saves built child records when the parent is saved. | `false` |

@@ -1,60 +1,89 @@
 # Enums
 
-Clear offers support of PG enum.
+Lustra can map PostgreSQL enum values to Crystal constants.
 
-To define an enum, use the `Clear.enum` method:
+Define the enum in Crystal with `Lustra.enum`.
 
-```ruby
-# Define the enum
-Clear.enum Gender, "male", "female"
-```
-
-This will create a new record called `MyApp::Gender`, which contains the constants `Male` and `Female`.
-
-## Validation, assignation
-
-You can use the new type directly in your model:
-
-```ruby
-class User
-  include Clear::Model
-  #...
-
-  column gender : Gender
+```crystal
+Lustra.enum GenderType, "male", "female", "other" do
+  def male?
+    self == Male
+  end
 end
 ```
 
-Assignation cannot be made from string, but instead from constants:
+The macro creates constants from the string values.
 
-```ruby
-u = User.new
-u.gender = MyApp::Gender::Male
+```crystal
+GenderType::Male.to_s
+# => "male"
+
+GenderType.all
+# => [GenderType::Male, GenderType::Female, GenderType::Other]
+
+GenderType.from_string("male")
+# => GenderType::Male
+
+GenderType.valid?("unknown")
+# => nil
 ```
 
-List of helpers are present for validation and conversion from/to string:
+`from_string` raises `Lustra::IllegalEnumValueError` for unknown values.
 
-```ruby
-MyApp::Gender.authorized_values # < return ["male", "female"]
-MyApp::Gender.all # < return [MyApp::Gender::Male, MyApp::Gender::Female]
+## Migrations
 
-MyApp::Gender::Female.to_s # Return "female"
+Create the PostgreSQL enum type before creating columns that use it.
 
-MyApp::Gender.from_string("male") # < return MyApp::Gender::Male
-MyApp::Gender.from_string("unknown") # < throw Clear::IllegalEnumValueError
+```crystal
+class CreateUsers202607010001
+  include Lustra::Migration
 
-MyApp::Gender.valid?("female") #< Return true
-MyApp::Gender.valid?("unknown") #< Return false
-```
+  def change(dir)
+    create_enum(:gender_type, GenderType)
 
-## Migration
-
-```ruby
-class MyMigration1
-    include Clear::Migration
-
-    def change(dir)
-        create_enum("gender", %w(male female))
+    create_table(:users) do |t|
+      t.column :gender, :gender_type
     end
+  end
 end
 ```
 
+You can also pass raw values.
+
+```crystal
+create_enum(:gender_type, ["male", "female", "other"])
+```
+
+Use `drop_enum` to remove a type. Pass the original values if the operation must be reversible.
+
+```crystal
+drop_enum(:gender_type, ["male", "female", "other"])
+```
+
+## Model Columns
+
+Use the enum type in the model column declaration.
+
+```crystal
+class User
+  include Lustra::Model
+
+  column gender : GenderType
+end
+```
+
+Assign enum constants in application code.
+
+```crystal
+user = User.new
+user.gender = GenderType::Male
+user.save!
+```
+
+Values loaded from PostgreSQL are converted back to the enum type.
+
+```crystal
+User.query.where { gender == GenderType::Female }.count
+User.query.where { gender == "male" }.count
+User.query.where { gender.in? GenderType.all }.count
+```
