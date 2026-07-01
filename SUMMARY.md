@@ -71,4 +71,3 @@
 * [Inline documentation](https://crystal-garage.github.io/lustra/)
 * [Github repository](https://github.com/crystal-garage/lustra)
 * [Contributors](https://github.com/crystal-garage/lustra/graphs/contributors)
-* [Benchmark](other-resources/benchmark.md)
