@@ -39,6 +39,43 @@ user.update(email: "new@example.com")
 user.update!(email: "new@example.com")
 ```
 
+## Idempotent Sync
+
+Use `find_or_build` when synchronizing records from an external source. It
+returns the existing record when one matches the lookup fields, or builds a new
+unsaved model with those fields assigned.
+
+```crystal
+user = User.query.find_or_build(provider: "github", provider_id: github_user.id)
+
+user.login = github_user.login
+user.name = github_user.name
+user.avatar_url = github_user.avatar_url
+user.synced_at = Time.utc
+user.save!
+```
+
+This lets the sync code assign the latest external values and save once.
+
+Use `find_or_create` when the initial values are enough to create the record
+immediately:
+
+```crystal
+tag = Tag.query.find_or_create(name: "orm")
+```
+
+`find_or_create` is also useful for join records:
+
+```crystal
+RepositoryFork.query.find_or_create(
+  parent_id: parent_repository.id,
+  fork_id: repository.id
+)
+```
+
+Prefer `find_or_build` when the record needs more fields assigned before saving.
+Prefer `find_or_create` when the lookup fields are enough for a valid record.
+
 ## Reload
 
 `reload` fetches the current database row by primary key, replaces the model values, clears cached association data, and marks the model as persisted:
