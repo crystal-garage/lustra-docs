@@ -51,7 +51,7 @@ Common operators:
 | `==` / `!=` | equality / inequality, including `IS NULL` and `IS NOT NULL` for nil |
 | `<`, `<=`, `>`, `>=` | comparison |
 | `=~`, `!~` | PostgreSQL regex match / non-match |
-| `&`, `|` | `AND`, `OR` |
+| `&`, `\|` | `AND`, `OR` |
 | `~condition` or `not(condition)` | `NOT` |
 | `in?(array)` | `IN (...)` |
 | `in?(range)` | range comparison |
