@@ -40,6 +40,51 @@ labels = User.query
   .map(fetch_columns: true) { |user| user["normalized_email"].as(String) }
 ```
 
+## `pluck_col` and `pluck`
+
+Use `pluck_col` when you only need one column and do not need model instances:
+
+```crystal
+names = User.query
+  .where(active: true)
+  .order_by(id: :asc)
+  .pluck_col("first_name")
+```
+
+Without a type argument, `pluck_col` returns `Array(Lustra::SQL::Any)`. Pass a
+type when you want a typed array:
+
+```crystal
+names = User.query.pluck_col("first_name", String)
+ids = User.query.pluck_col(:id, Int64)
+```
+
+Use `pluck` for multiple columns:
+
+```crystal
+users = User.query.pluck("first_name", "last_name")
+
+users.each do |(first_name, last_name)|
+  puts "#{first_name} #{last_name}"
+end
+```
+
+Named `pluck` returns typed tuples:
+
+```crystal
+users = User.query.pluck(
+  "first_name": String,
+  "UPPER(last_name)": String
+)
+```
+
+`pluck` and `pluck_col` execute a copied query with a new `SELECT` list, so they
+do not instantiate models. Use them for simple column extraction. Use `each`,
+`map`, or `fetch` when you need models or full raw rows.
+
+String fields are SQL fragments. Use symbols for simple column names when
+possible, and do not interpolate untrusted input into string fragments.
+
 ## `to_a`
 
 `to_a` loads all matching model records into an array:
