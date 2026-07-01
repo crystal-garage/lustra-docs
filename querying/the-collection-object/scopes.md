@@ -47,6 +47,50 @@ scope("with_ids") { |*ids| where { id.in?(ids) } }
 
 Use scopes for reusable filtering, ordering, or query composition. Keep them small and predictable.
 
+## Computed Fields
+
+Scopes can also add computed SQL fields that are reused by several queries.
+
+```crystal
+class Repository
+  include Lustra::Model
+
+  column id : Int64, primary: true, presence: false
+  column name : String
+
+  scope("with_counts") do
+    self
+      .select(
+        "repositories.*",
+        "(select COUNT(*) from relationships r WHERE r.dependency_id = repositories.id) AS dependents_count",
+        "(select COUNT(*) from relationships r WHERE r.master_id = repositories.id) AS dependencies_count"
+      )
+      .group_by("repositories.id")
+  end
+end
+```
+
+The scope can be chained with filters, ordering, and pagination:
+
+```crystal
+repositories = Repository
+  .query
+  .with_counts
+  .where(ignore: false)
+  .order_by("dependents_count", :desc)
+  .limit(20)
+```
+
+When a scope selects fields that are not model columns, fetch them with
+`fetch_columns: true` and read them from `attributes` or `[]`.
+
+```crystal
+repositories.each(fetch_columns: true) do |repository|
+  puts repository.name
+  puts repository["dependents_count"]
+end
+```
+
 ## Mutability
 
 Scope blocks run against a collection and mutate that collection like other query-refinement methods.
