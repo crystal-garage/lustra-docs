@@ -61,11 +61,13 @@
 ## Additional and advanced features
 
 * [JSONB](additional-and-advanced-features/jsonb.md)
+* [Array Querying](additional-and-advanced-features/array-querying.md)
 * [Symbol vs String](additional-and-advanced-features/symbol-vs-string.md)
 * [Enums](additional-and-advanced-features/enums.md)
 * [BCrypt](additional-and-advanced-features/bcrypt.md)
 * [Full Text Search](additional-and-advanced-features/full-text-search.md)
-* [Handling multi-connection](additional-and-advanced-features/handling-multi-connection.md)
+* [Geometric Types](additional-and-advanced-features/geometric-types.md)
+* [Handling multiple connections](additional-and-advanced-features/handling-multi-connection.md)
 
 ## Other resources
 
