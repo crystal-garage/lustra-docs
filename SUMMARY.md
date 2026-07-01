@@ -49,6 +49,7 @@
 * [Writing low-level SQL](querying/low-level-sql/README.md)
   * [Select Clause](querying/low-level-sql/select-clause.md)
   * [Insert Clause](querying/low-level-sql/insert-clause.md)
+  * [Update Clause](querying/low-level-sql/update-clause.md)
   * [Delete Clause](querying/low-level-sql/delete-clause.md)
 
 ## Migrations
