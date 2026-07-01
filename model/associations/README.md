@@ -17,3 +17,48 @@ Lustra supports the common Active Record style associations:
 Associations generate query helpers, assignment helpers, and eager-loading helpers such as `with_posts`.
 
 By default, Lustra follows naming conventions. You can override foreign keys and primary keys when your schema uses different names.
+
+## Association Collections
+
+Collection associations return query collections, not plain arrays. This means
+you can refine an association query before executing it.
+
+```crystal
+user = User.find!(1)
+
+repositories = user
+  .repositories
+  .where(ignore: false)
+  .order_by(stars_count: :desc)
+  .limit(20)
+```
+
+The query is executed by terminal methods such as `each`, `to_a`, `first`,
+`count`, or `empty?`.
+
+```crystal
+repositories.each do |repository|
+  puts repository.name
+end
+```
+
+Association collections can also be combined with scopes and eager-loading
+helpers:
+
+```crystal
+repositories = user
+  .repositories
+  .published
+  .with_tags
+  .with_counts
+  .order_by("repositories.id", :asc)
+```
+
+The same pattern works from `has_many through` associations:
+
+```crystal
+dependencies = repository
+  .dependencies
+  .where { relationships.development.false? }
+  .with_user
+```
