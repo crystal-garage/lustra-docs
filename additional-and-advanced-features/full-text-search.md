@@ -35,10 +35,13 @@ add_full_text_searchable(
 
 ## Manual Vector Maintenance
 
-`t.full_text_searchable` is a good fit when the search vector is built from
-columns on the same table. If the vector depends on joined or aggregated data,
-create the `tsvector` column, index, and PostgreSQL triggers manually, then use
-the model macro only for querying.
+`t.full_text_searchable` is a good fit when the search vector is built only from
+columns on the same table. It creates and maintains the vector for those
+same-table fields.
+
+If the vector depends on joined or aggregated data, create the `tsvector`
+column, index, and PostgreSQL triggers manually, then use the model macro only
+for querying.
 
 For example, a repository search vector may include repository fields and tag
 names from a join table:
@@ -122,6 +125,12 @@ Repository.query.search("orm")
 
 The migration owns how `tsv` is maintained. Lustra only builds the search
 condition against that column.
+
+When the vector includes joined data, make sure the vector is refreshed when
+that joined data changes. The example above refreshes `tsv` when a repository is
+inserted or updated. If tag changes must update search results immediately, add
+triggers on the join table or update the repository row from application code so
+the repository trigger recalculates the vector.
 
 ## Model
 
