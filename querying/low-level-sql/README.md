@@ -129,3 +129,23 @@ Plain string conditions are inserted as SQL. Use them only for trusted SQL.
 ```crystal
 Lustra::SQL.select.from(:users).where("deleted_at IS NULL")
 ```
+
+Raw SQL fragments are useful for internal expressions such as aggregate
+ordering, PostgreSQL functions, and maintenance queries:
+
+```crystal
+Repository.query.order_by(
+  "(select COUNT(*) from relationships r WHERE r.dependency_id = repositories.id)",
+  :desc
+)
+```
+
+Do not interpolate user input into raw SQL strings. Use expression helpers or
+parameterized raw fragments instead:
+
+```crystal
+email = params["email"]
+
+User.query.where { users.email == email }
+Lustra::SQL.select.from(:users).where(Lustra::SQL.raw("email = ?", email))
+```
