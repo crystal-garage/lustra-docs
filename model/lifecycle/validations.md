@@ -16,7 +16,7 @@ To create a custom validator, just override the `validate` method:
 
 ```ruby
 class Article
-  include Clear::Model
+  include Lustra::Model
 
   column name : String
   column description : String
@@ -41,7 +41,7 @@ To simplify the writing of validation code, you may want to use `on_presence(fie
 
 ```ruby
 class Article
-  include Clear::Model
+  include Lustra::Model
 
   column name : String
   column description : String

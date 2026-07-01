@@ -2,21 +2,21 @@
 
 Often you will need to connect to two or more database, due to legacy code.
 
-Clear offers multi-connections possibility, and your model can live in a specific database.
+Lustra offers multi-connections possibility, and your model can live in a specific database.
 
-If not multiple connection are set, clear use `default` connection as living place for the models.
+If not multiple connection are set, Lustra use `default` connection as living place for the models.
 
 ### Setup the multiple connections
 
 ```ruby
-  Clear::SQL.init("default", "postgres://[USER]:[PASSWORD]@[HOST]/[DATABASE]")
-  Clear::SQL.add_connection("secondary", "postgres://[USER]:[PASSWORD]@[HOST]/[DATABASE]")
+  Lustra::SQL.init("default", "postgres://[USER]:[PASSWORD]@[HOST]/[DATABASE]")
+  Lustra::SQL.add_connection("secondary", "postgres://[USER]:[PASSWORD]@[HOST]/[DATABASE]")
 ```
 
 You can also use hash notation:
 
 ```ruby
-  Clear::SQL.init(
+  Lustra::SQL.init(
     "default" => "postgres://[USER]:[PASSWORD]@[HOST]/[DATABASE]",
     "legacy" => "postgres://[USER]:[PASSWORD]@[HOST]/[DATABASE]"
   )
@@ -46,6 +46,5 @@ Models between different connections should not share relations. We cannot guara
 In low-level API, you can call `use_connection` to force a request to be called on a specific collection:
 
 ```ruby
-Clear::SQL.select.use_connection("legacy").from("users").fetch{ |u| ... }
+Lustra::SQL.select.use_connection("legacy").from("users").fetch{ |u| ... }
 ```
-

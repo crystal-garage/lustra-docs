@@ -2,10 +2,10 @@
 
 Transaction are safeguard to ensure than a list of operation on a database are only permanent if they can all succeed as atomic action.
 
-In Clear, the usage of transaction is simple:
+In Lustra, the usage of transaction is simple:
 
 ```ruby
-Clear::SQL.transaction do
+Lustra::SQL.transaction do
     yacine.withdraw(100)
     mary.deposit(100)
 end
@@ -18,9 +18,9 @@ In the example above, if one of the method fail, the whole transaction block wil
 You can manually rollback a transaction if something went wrong:
 
 ```ruby
-Clear::SQL.transaction do
+Lustra::SQL.transaction do
     yacine.withdraw(100)
-    Clear::SQL.rollback if mary.is_suspicious?
+    Lustra::SQL.rollback if mary.is_suspicious?
     mary.deposit(100)
 end
 ```
@@ -32,11 +32,11 @@ In this case, the block will be returned, nothing will be committed in the datab
 Nested transaction are not working, but save points are used for that. Let's take an example:
 
 ```ruby
-Clear::SQL.transaction do
+Lustra::SQL.transaction do
     puts "I do something"
-    Clear::SQL.transaction do
+    Lustra::SQL.transaction do
         puts "I do another thing"
-        Clear::SQL.rollback
+        Lustra::SQL.rollback
         puts "This should not print"
     end
     puts "This will never reach too."
@@ -59,11 +59,11 @@ Since **nested transaction are not permitted**, rollback will rollback the top-m
 For nested transaction, you may want to use save points:
 
 ```ruby
-Clear::SQL.with_savepoint do
+Lustra::SQL.with_savepoint do
     puts "I do something"
-    Clear::SQL.with_savepoint do
+    Lustra::SQL.with_savepoint do
         puts "I do another thing"
-        Clear::SQL.rollback
+        Lustra::SQL.rollback
         puts "This should not print"
     end
     puts "Eventually, I do something else"

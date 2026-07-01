@@ -30,13 +30,13 @@ CREATE TABLE post_tags (
 );
 ```
 
-You may notice usage of FOREIGN KEY constraints over post\_tags. Clear doesn't provide any feature for cascading deletion, and relay exclusively on PostgreSQL.
+You may notice usage of FOREIGN KEY constraints over post\_tags. Lustra doesn't provide any feature for cascading deletion, and relay exclusively on PostgreSQL.
 
 Now, let's define our models:
 
 ```ruby
 class Post
-  include Clear::Model
+  include Lustra::Model
 
   primary_key
 
@@ -47,7 +47,7 @@ class Post
 end
 
 class Tag
-  include Clear::Model
+  include Lustra::Model
 
   primary_key
 
@@ -87,10 +87,10 @@ Optionally, we can define our middle-table model. In this case, you should use t
 
 ```ruby
 class Post
-  include Clear::Model
+  include Lustra::Model
 
   class Tag
-    include Clear::Model
+    include Lustra::Model
 
     belongs_to post : Post
     belongs_to tag : Tag
@@ -107,7 +107,7 @@ class Post
 end
 
 class Tag
-  include Clear::Model
+  include Lustra::Model
 
   primary_key
 
@@ -117,5 +117,5 @@ class Tag
 end
 ```
 
-**Note:** The model `Post::Tag` don't have primary key which can lead to issues with Clear. [Feel free to leave issues to the community here.](https://github.com/anykeyh/clear/issues)
+**Note:** The model `Post::Tag` don't have primary key which can lead to issues with Lustra. [Feel free to leave issues to the community here.](https://github.com/crystal-garage/lustra/issues)
 

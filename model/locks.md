@@ -5,7 +5,7 @@
 You can use lock using `with_lock` method on query collection:
 
 ```ruby
-Clear::SQL.transaction do
+Lustra::SQL.transaction do
     # SELECT * FROM users WHERE organization = 'Crystal Lang' FOR UPDATE
     User.where(organization: "Crystal Lang").with_lock.each do |user|
         # Do something with your users

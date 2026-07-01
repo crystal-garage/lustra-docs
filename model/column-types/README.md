@@ -1,6 +1,6 @@
 # Defining your model
 
-Model definition in Clear is done by inclusion of the Clear::Model module in your class. Assuming we have this table in PostgreSQL:
+Model definition in Lustra is done by inclusion of the Lustra::Model module in your class. Assuming we have this table in PostgreSQL:
 
 ```sql
 CREATE TABLE articles (
@@ -15,7 +15,7 @@ The definition of this model is straight forward:
 {% code title="article.cr" %}
 ```ruby
 class Article
-  include Clear::Model
+  include Lustra::Model
 
   column name : String
   column description : String?
@@ -27,13 +27,13 @@ end
 
 Cut step by step, this is what happens:
 
-First, we include all the magic of Clear in our class:
+First, we include all the magic of Lustra in our class:
 
 ```ruby
-include Clear::Model
+include Lustra::Model
 ```
 
-Second, we define `name` column as String. Clear will map automatically the column to the model attribute. 
+Second, we define `name` column as String. Lustra will map automatically the column to the model attribute.
 
 ```ruby
 column name : String
@@ -45,7 +45,7 @@ Third, we define `description` . We defined `description`as `NULLABLE` in our da
 column description : String?
 ```
 
-Finally, we define `id` as our primary key for this model. While being declared as `NOT NULL`, the column is defined with a default value in PostgreSQL. Therefore, we tell Clear to not check value presence on save/validate by adding `presence: false` to the column definition.
+Finally, we define `id` as our primary key for this model. While being declared as `NOT NULL`, the column is defined with a default value in PostgreSQL. Therefore, we tell Lustra to not check value presence on save/validate by adding `presence: false` to the column definition.
 
 ```ruby
 column id : Int32, primary: true, presence: false
@@ -61,13 +61,13 @@ a.save!
 puts "Article has been properly saved as id=#{a.id}"
 ```
 
-By default, Clear will inflect the model name and use plural lower case version of the model name as table name \(here `articles`\).
+By default, Lustra will inflect the model name and use plural lower case version of the model name as table name \(here `articles`\).
 
 You may want to override this behavior, by redefining `self.table` :
 
 ```ruby
 class Model::Customer
-  include Clear::Model
+  include Lustra::Model
 
   self.table = "clients" #< Different from infered "model_customers" table.
   # ...

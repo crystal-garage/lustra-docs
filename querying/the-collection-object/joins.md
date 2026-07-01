@@ -1,6 +1,6 @@
 # Joins
 
-In Clear, since every Collection is a SelectBuilder object, you can write very complex queries in a simple fashion. Let's see this example:
+In Lustra, since every Collection is a SelectBuilder object, you can write very complex queries in a simple fashion. Let's see this example:
 
 ```ruby
 # Get the posts of the users which have more than X posts:

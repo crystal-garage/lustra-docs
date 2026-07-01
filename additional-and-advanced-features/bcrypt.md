@@ -4,7 +4,7 @@ We provide helper for storing encrypted password. See example below:
 
 ```ruby
 class User
-  include Clear::Model
+  include Lustra::Model
   primary_key :id, type: :uuid
   
   column encrypted_password : Crypto::Bcrypt::Password

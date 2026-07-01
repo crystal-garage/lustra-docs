@@ -1,12 +1,12 @@
 # Enums
 
-Clear offers support of PG enum.
+Lustra offers support of PG enum.
 
-To define an enum, use the `Clear.enum` method:
+To define an enum, use the `Lustra.enum` method:
 
 ```ruby
 # Define the enum
-Clear.enum Gender, "male", "female"
+Lustra.enum Gender, "male", "female"
 ```
 
 This will create a new record called `MyApp::Gender`, which contains the constants `Male` and `Female`.
@@ -17,7 +17,7 @@ You can use the new type directly in your model:
 
 ```ruby
 class User
-  include Clear::Model
+  include Lustra::Model
   #...
 
   column gender : Gender
@@ -40,7 +40,7 @@ MyApp::Gender.all # < return [MyApp::Gender::Male, MyApp::Gender::Female]
 MyApp::Gender::Female.to_s # Return "female"
 
 MyApp::Gender.from_string("male") # < return MyApp::Gender::Male
-MyApp::Gender.from_string("unknown") # < throw Clear::IllegalEnumValueError
+MyApp::Gender.from_string("unknown") # < throw Lustra::IllegalEnumValueError
 
 MyApp::Gender.valid?("female") #< Return true
 MyApp::Gender.valid?("unknown") #< Return false
@@ -50,7 +50,7 @@ MyApp::Gender.valid?("unknown") #< Return false
 
 ```ruby
 class MyMigration1
-    include Clear::Migration
+    include Lustra::Migration
 
     def change(dir)
         create_enum("gender", %w(male female))

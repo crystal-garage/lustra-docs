@@ -6,7 +6,7 @@ Let's get an example:
 
 ```ruby
 class User
-    include Clear::Model
+    include Lustra::Model
 
     primary_key
 

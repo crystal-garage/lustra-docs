@@ -9,4 +9,3 @@ end
 ```
 
 You can clear the current ordering by using the chainable method `clear_order_bys`
-

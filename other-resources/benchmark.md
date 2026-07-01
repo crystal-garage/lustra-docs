@@ -1,22 +1,22 @@
 # Benchmark
 
-## How fast is Clear?
+## How fast is Lustra?
 
 ## Initial bootstrapping
 
-Clear magic is built on compile time. Therefore, the impact on loading time is very limited. Clear can be used for example into web function \(lambda function, google cloud function\) application without any problem.
+Lustra magic is built on compile time. Therefore, the impact on loading time is very limited. Lustra can be used for example into web function \(lambda function, google cloud function\) application without any problem.
 
-The only overhead is the connection to the database; Clear allocate by default 5 connections to PostgreSQL. In the case of mono-fiber web-function projects, you may want to reduce the connection pool to 1 only:
+The only overhead is the connection to the database; Lustra allocate by default 5 connections to PostgreSQL. In the case of mono-fiber web-function projects, you may want to reduce the connection pool to 1 only:
 
 ```ruby
-Clear::SQL.init("postgres://postgres@localhost/example_db", connection_pool_size: 1)
+Lustra::SQL.init("postgres://postgres@localhost/example_db", connection_pool_size: 1)
 ```
 
 Another good performance improvement would be to connect through [PGBouncer](https://pgbouncer.github.io/) instead of directly to the database.
 
 ## Query and fetching benchmark
 
-Here is a simple benchmark comparing the different layers of Clear and how they impact the performance, over a 100k row very simple table:
+Here is a simple benchmark comparing the different layers of Lustra and how they impact the performance, over a 100k row very simple table:
 
 ```text
 With Model: With attributes and cursor    7.4  (135.09ms) (± 6.44%)  116409530 B/op   5.64× slower
@@ -31,7 +31,7 @@ With Model: With attributes and cursor    7.4  (135.09ms) (± 6.44%)  116409530 
 
 While being a bit outdated, a benchmark of the competition [has been done here](https://github.com/jwoertink/crystal_orm_test).
 
-Clear stands in the middle of the crowd, being slightly slower than some other ORM over `select` methods.
+Lustra stands in the middle of the crowd, being slightly slower than some other ORM over `select` methods.
 
-More noticeably, Clear performs 5 to 8x faster than Ruby's ActiveRecord !
+More noticeably, Lustra performs 5 to 8x faster than Ruby's ActiveRecord !
 

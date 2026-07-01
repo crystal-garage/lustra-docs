@@ -9,12 +9,12 @@ For this example, let's assume we want to count the new user creation per day du
 In this case, using joins onto a generated series of day is the way to go. CTE makes it very simple to write and manage:
 
 ```ruby
-dates_in_september = Clear::SQL.select({
+dates_in_september = Lustra::SQL.select({
     day_start: "generate_series(date '2018-09-01', date '2018-09-30', '1 day'::interval)",
     day_end: "generate_series(date '2018-09-01', date '2018-09-30', '1 day'::interval) + '1 day'::interval";
 })
 
-Clear::SQL.select({
+Lustra::SQL.select({
     count: "COUNT(users.*)",
     day: "dates.day_start"
 })
@@ -37,7 +37,7 @@ Since all model collections are SQL query, you can pass collection as parameter 
 You can [pass window ](https://www.postgresql.org/docs/current/tutorial-window.html)using window method:
 
 ```ruby
-Clear::SQL
+Lustra::SQL
     .select("sum(salary) OVER w", "avg(salary) OVER w")
     .from("empsalary")
     .window({w: "(PARTITION BY depname ORDER BY salary DESC)"})

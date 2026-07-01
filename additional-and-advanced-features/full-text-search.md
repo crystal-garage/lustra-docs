@@ -23,7 +23,7 @@ Now, let's build some models:
 
 ```ruby
   class Post
-    include Clear::Model
+    include Lustra::Model
     #...
 
     full_text_searchable
@@ -62,7 +62,7 @@ full_text_searchable catalog: "pg_catalog.french"
 ```
 
 {% hint style="info" %}
-For now, Clear doesn't offers dynamic selection of catalog \(for let's say multi-lang service\). If your app need this feature, do not hesitate to open an issue.
+For now, Lustra doesn't offers dynamic selection of catalog \(for let's say multi-lang service\). If your app need this feature, do not hesitate to open an issue.
 {% endhint %}
 
 **trigger\_name, function\_name**

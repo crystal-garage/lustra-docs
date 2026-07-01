@@ -1,8 +1,8 @@
 # Converters
 
-Any type from PostgreSQL can be converted using converter objects. By default, Clear converts already the main type of PostgreSQL.
+Any type from PostgreSQL can be converted using converter objects. By default, Lustra converts already the main type of PostgreSQL.
 
-However, custom type may not be supported yet. Clear offers you the possibility to add a custom converter.
+However, custom type may not be supported yet. Lustra offers you the possibility to add a custom converter.
 
 ## Declare a new converter
 
@@ -49,14 +49,14 @@ class MyApp::ColorConverter
   end
 end
 
-Clear::Model::Converter.add_converter("MyApp::Color", MyApp::ColorConverter)
+Lustra::Model::Converter.add_converter("MyApp::Color", MyApp::ColorConverter)
 ```
 
 Then you can use your mapped type in your model:
 
 ```ruby
 class MyApp::MyModel
-  include Clear::Model
+  include Lustra::Model
   #...
   column color : Color #< Automatically get the converter
 end
@@ -68,7 +68,7 @@ Optionally, you may want to use a converter which is not related to the type its
 
 ```ruby
 class MyApp::MyModel
-  include Clear::Model
+  include Lustra::Model
   #...
   column s : String, converter: "my_custom_converter"
 end

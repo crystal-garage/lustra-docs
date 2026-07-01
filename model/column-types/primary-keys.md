@@ -1,6 +1,6 @@
 # Primary Keys
 
-Clear needs your model to define a primary key column. By default, Clear can handle properly `int`, `bigint`, `string` and `uuid` primary keys.
+Lustra needs your model to define a primary key column. By default, Lustra can handle properly `int`, `bigint`, `string` and `uuid` primary keys.
 
 {% hint style="warning" %}
 As time of writing this manual, compound primary keys are not handled properly.
@@ -8,11 +8,11 @@ As time of writing this manual, compound primary keys are not handled properly.
 
 ## `primary_key` helper
 
-Clear offers a built-in `primary_key` helper which will define your primary key without hassle:
+Lustra offers a built-in `primary_key` helper which will define your primary key without hassle:
 
 ```ruby
 class Product
-  include Clear::Model
+  include Lustra::Model
 
   self.table = "products"
 
@@ -33,6 +33,6 @@ column id : Int64, primary: true, presence: false
 The primary key name is ID, of type bigint and it won't check the presence on save because it has default value
 
 {% hint style="info" %}
-In case of `uuid`, Clear will generate a new `uuid` at every new object creation before inserting it into the database.
+In case of `uuid`, Lustra will generate a new `uuid` at every new object creation before inserting it into the database.
 {% endhint %}
 

@@ -1,8 +1,8 @@
 # Describing your columns
 
-## Clear::Model\#column
+## Lustra::Model\#column
 
-Clear offers a column macro:
+Lustra offers a column macro:
 
 ```ruby
 column method_name : Type, [primary: bool], [converter: "any_string"], 
@@ -35,7 +35,7 @@ The arguments action is defined as below:
       <td style="text-align:left"><code>converter</code>
       </td>
       <td style="text-align:left">
-        <p>Use a specific data converter between Clear and PostgreSQL to handle this
+        <p>Use a specific data converter between Lustra and PostgreSQL to handle this
           column.</p>
         <p>&lt;b&gt;&lt;/b&gt;</p>
         <p><b>Default</b>: Will lookup for the converter related to the type of the
@@ -48,7 +48,7 @@ The arguments action is defined as below:
       <td style="text-align:left"><code>column_name</code>
       </td>
       <td style="text-align:left">
-        <p>In the case the column name is different from the field in Clear (e.g.
+        <p>In the case the column name is different from the field in Lustra (e.g.
           the name is a reserved keyword in Crystal Lang), you might want to change
           it here.</p>
         <p></p>
@@ -70,7 +70,7 @@ The arguments action is defined as below:
   </tbody>
 </table>### Non-presence vs Nil
 
-Clear use a column assignation system which provide safeguard against `NilException` while keeping possibility to fetch semi-fetched model. For example, you may want to fetch only the `first_name` and `last_name` of a `User` through the database:
+Lustra use a column assignation system which provide safeguard against `NilException` while keeping possibility to fetch semi-fetched model. For example, you may want to fetch only the `first_name` and `last_name` of a `User` through the database:
 
 ```ruby
 User.query.select("first_name, last_name").each do |usr|
@@ -99,7 +99,7 @@ end
 | `xxx_column.value` | Return the column value. Raise an error if the column is in a non-present state. Equivalent to `self.xxx` |  |
 | `xxx_column.value(default)` | Return the current column value, OR default if the column is in a non-present state |  |
 
-### Column types Clear already map different types of column from PostgreSQL to Crystal:
+### Column types Lustra already map different types of column from PostgreSQL to Crystal:
 
 | Crystal | PostgreSQL |
 | :--- | :--- |
@@ -118,12 +118,12 @@ end
 #### Using BigDecimal (in Model) and Numeric (in Migrations)
 `BigDecimal` ([in `.cr`](https://crystal-lang.org/api/0.35.1/BigDecimal.html)) is mapped to `Numeric` ([in `pg`](https://www.postgresql.org/docs/9.6/datatype-numeric.html)) in migration columns (i.e. declaring column data type as `"bigdecimal"` would be equal to the column being declared with type `"numeric"`, if you wish to specify precision, and scale, please use `"numeric(precision, scale)"` or `"numeric(precision)"` (with scale defaulting to 0), instead of `"bigdecimal"`)
 
-Please take note that PostgreSQL will throw a `numeric field overflow` (and in Clear: `Clear::SQl::Error`) if you `INSERT` into the database a BigDecimal/ numeric value with the integer part (to the left of the radix point) of a size that is bigger than the precision that is specified in the numeric type that you declare. This can be seen from the following example taken from specs:
+Please take note that PostgreSQL will throw a `numeric field overflow` (and in Lustra: `Lustra::SQl::Error`) if you `INSERT` into the database a BigDecimal/ numeric value with the integer part (to the left of the radix point) of a size that is bigger than the precision that is specified in the numeric type that you declare. This can be seen from the following example taken from specs:
 
 ```
 
   class Data
-    include Clear::Model
+    include Lustra::Model
 
     column id : Int32, primary: true, presence: false
     column num3 : BigDecimal?
@@ -131,7 +131,7 @@ Please take note that PostgreSQL will throw a `numeric field overflow` (and in C
   end
 
   class ModelSpecMigration123
-    include Clear::Migration
+    include Lustra::Migration
 
     def change(dir)
       create_table(:model_spec_data) do |t|

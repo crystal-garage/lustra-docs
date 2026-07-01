@@ -6,7 +6,7 @@ Any simple query can be transformed to `update` query. The new update query will
 
 ```ruby
 User.query.where(name =~ /[A-Z]/ ).
-     to_update.set(name: Clear::SQL.unsafe("LOWERCASE(name)")).execute
+     to_update.set(name: Lustra::SQL.unsafe("LOWERCASE(name)")).execute
 ```
 
 ## Bulk delete

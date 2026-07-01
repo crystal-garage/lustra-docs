@@ -2,15 +2,15 @@
 
 ## Available Commands
 
-There are a few commands that makes it a more enjoyable experience to your everyday usage of Clear ORM.
+There are a few commands that makes it a more enjoyable experience to your everyday usage of Lustra ORM.
 
 ### Generators
 
-The model and scaffold generators will create migrations appropriate for adding a new model. Clear ORM provides a consice DSL for defining migrations, but these can also be generated via the CLI.
+The model and scaffold generators will create migrations appropriate for adding a new model. Lustra ORM provides a consice DSL for defining migrations, but these can also be generated via the CLI.
 
 ```bash
 Usage:
-  clear generate [flags...] [arg...]
+  lustra generate [flags...] [arg...]
 
 Generate code automatically
 
@@ -27,11 +27,11 @@ Subcommands:
 
 ### Migration
 
-Migrations are a convenient way to alter the database schema over time in a consistent and easy way. Clear ORM provides a beautiful DSL so that you don't have to write SQL by hand, allowing your schema and changes to be database independent.
+Migrations are a convenient way to alter the database schema over time in a consistent and easy way. Lustra ORM provides a beautiful DSL so that you don't have to write SQL by hand, allowing your schema and changes to be database independent.
 
 ```bash
 Usage:
-  clear migrate [flags...] [arg...]
+  lustra migrate [flags...] [arg...]
 
 Manage migration state of your database
 

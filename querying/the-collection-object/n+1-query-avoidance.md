@@ -21,7 +21,7 @@ end
 
 Since it's  faster to query once 100 models than to query 100 times for each model, we could optimize it by calling two requests: one for the posts then one for the related categories.
 
-Clear offers convenient methods called `with_[relation]` which build the query and cache the related model. Let's try it:
+Lustra offers convenient methods called `with_[relation]` which build the query and cache the related model. Let's try it:
 
 ```ruby
 Post.query.with_category.each do |post|

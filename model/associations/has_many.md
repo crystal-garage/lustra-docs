@@ -20,7 +20,7 @@ CREATE TABLE posts (
 
 ```ruby
 class Post
-  include Clear::Model
+  include Lustra::Model
 
   primary_key
 
@@ -31,7 +31,7 @@ class Post
 end
 
 class Category
-  include Clear::Model
+  include Lustra::Model
 
   primary_key
 
@@ -62,7 +62,7 @@ end
 
 ## Customizing the relation
 
-Clear uses naming convention to infer the name of the foreign key. You may want to override this behavior by adding some parameters:
+Lustra uses naming convention to infer the name of the foreign key. You may want to override this behavior by adding some parameters:
 
 ```ruby
 has_many relation_name : RelationType,

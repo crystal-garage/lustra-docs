@@ -2,15 +2,15 @@
 
 ## Call migration script
 
-Clear offers a migration system. Migration allow you to handle state update of your database.
+Lustra offers a migration system. Migration allow you to handle state update of your database.
 
 Migration is a list of change going through a direction, up \(commit changes\) or down \(rollback changes\).
 
-In clear, a migration is defined like this:
+In Lustra, a migration is defined like this:
 
 ```ruby
 class MyMigration1
-  include Clear::Migration
+  include Lustra::Migration
 
   def change(direction)
     direction.up do
@@ -34,7 +34,7 @@ To do it, just call `execute` into your direction block.
 
 ```ruby
 class MyMigration1
-  include Clear::Migration
+  include Lustra::Migration
 
   def change(direction)
     direction.up do
@@ -50,11 +50,11 @@ end
 
 ## Built-in helpers
 
-Clear offers helpers for simplify declaring your migration
+Lustra offers helpers for simplify declaring your migration
 
 ### Creating a table
 
-Clear provides DSL looking like ActiveRecord for creating a table.
+Lustra provides DSL looking like ActiveRecord for creating a table.
 
 ```ruby
 create_table(:users) do |t|
@@ -80,7 +80,7 @@ Migration should be ordered by a number. This number can be written in different
 
 ```ruby
 class Migration1
-  include Clear::Migration
+  include Lustra::Migration
 
   def change(dir)
     #...
@@ -94,11 +94,11 @@ If you're using one file per migration, you can prepend the ordering number at t
 1234_migration.cr
 ```
 
-Finally, if you feel more rock'n'roll and build a complex dynamic migration system on top of Clear, you can override the uid method:
+Finally, if you feel more rock'n'roll and build a complex dynamic migration system on top of Lustra, you can override the uid method:
 
 ```ruby
 class Migration1
-  include Clear::Migration
+  include Lustra::Migration
 
   def uid
     123_i64 #Number must be a signed 64bits integer !
@@ -112,16 +112,15 @@ end
 
 ## Calling your migration
 
-Clear will offers soon a CLI; meanwhile, you can call migration update using methods in the Migration Manager:
+Lustra will offers soon a CLI; meanwhile, you can call migration update using methods in the Migration Manager:
 
 ```ruby
 # Activate all the migrations. Will call change with up direction for each down migrations
-Clear::Migration::Manager.instance.apply_all
+Lustra::Migration::Manager.instance.apply_all
 ```
 
 ```ruby
 # Go to a specific migration. All migration with a number above than the version number will be downed if not yet down.
 # All migrations with a version number below will be activated if not yet up.
-Clear::Migration::Manager.instance.apply_to(version_number)
+Lustra::Migration::Manager.instance.apply_to(version_number)
 ```
-

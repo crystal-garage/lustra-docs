@@ -1,12 +1,12 @@
 # Triggers
 
-Clear provides a way to create triggers on different time of the lifecycle of the model.
+Lustra provides a way to create triggers on different time of the lifecycle of the model.
 
 ## Example usage
 
 ```ruby
 class User
-    include Clear::Model
+    include Lustra::Model
 
     column first_name : String
     column last_name : String
@@ -27,7 +27,7 @@ end
 
 ## Caveats
 
-* Calling before/after with a block will return a Clear::Model as argument. Therefore, you must cast the variable \(`m.as(User)` in example above\).
+* Calling before/after with a block will return a Lustra::Model as argument. Therefore, you must cast the variable \(`m.as(User)` in example above\).
 * `before/after :action, :method` must be pointing to public method. If the method is private, the call will fail.
 
 ## Trigger list

@@ -1,6 +1,6 @@
 # Table of contents
 
-* [Welcome to Clear](README.md)
+* [Welcome to Lustra](README.md)
 
 ## Introduction
 
@@ -67,8 +67,8 @@
 
 ## Other resources
 
-* [API Documentation](https://crystal-garage.gitbook.io/clear/)
-* [Inline documentation](https://crystal-garage.github.io/clear/)
-* [Github repository](https://github.com/crystal-garage/clear)
-* [Contributors](https://github.com/crystal-garage/clear/graphs/contributors)
+* [API Documentation](https://crystal-garage.github.io/lustra/)
+* [Inline documentation](https://crystal-garage.github.io/lustra/)
+* [Github repository](https://github.com/crystal-garage/lustra)
+* [Contributors](https://github.com/crystal-garage/lustra/graphs/contributors)
 * [Benchmark](other-resources/benchmark.md)
