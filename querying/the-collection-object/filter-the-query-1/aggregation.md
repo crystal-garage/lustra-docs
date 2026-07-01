@@ -28,7 +28,16 @@ average_time = User.query.avg("time_connected", Float64)
 total_score = User.query.sum("score")
 ```
 
-`min`, `max`, and `avg` require the expected return type. `sum` returns `Float64`.
+`min`, `max`, and `avg` require the expected return type. `sum` currently returns `Float64`.
+
+`sum` does not sanitize the `field` input, so pass trusted SQL fragments only.
+
+```crystal
+total_stars = Repository.query.where(language: "Crystal").sum("stars")
+# => Float64
+```
+
+For typed aggregate output, use `agg`.
 
 ## Custom Aggregates
 
@@ -36,9 +45,13 @@ Use `agg` for custom aggregate expressions:
 
 ```crystal
 median_age = User.query.agg("PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY age)", Float64)
+max_updated_at = User.query.agg("MAX(updated_at)", Time)
 ```
 
-`agg` returns one scalar value. For grouped aggregate rows, use `select`, `group_by`, and `fetch`/`pluck` instead.
+`agg` returns one scalar value. `agg` should not be used with `group_by` unless your intent is to wrap grouped rows first and aggregate that result as a whole.
+For grouped results, use `select`, `group_by`, and `fetch`/`pluck`.
+
+`agg` also handles paginated/limited queries by wrapping them in a subquery.
 
 ## Exists
 
@@ -51,3 +64,5 @@ end
 ```
 
 `exists?` always queries the database. It is useful when you want a direct existence check instead of loading records.
+
+`count` and `exists?` have different costs: `count` asks for row cardinality, while `exists?` only checks that at least one row matches.
