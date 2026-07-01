@@ -22,7 +22,7 @@
   * [Validations](model/lifecycle/validations.md)
   * [Triggers](model/lifecycle/callbacks.md)
 * [SQL Views and Read-Only Models](model/sql-views.md)
-* [Batchs operations](model/batchs-operations/README.md)
+* [Batch operations](model/batchs-operations/README.md)
   * [Bulk update](model/batchs-operations/bulk-update.md)
   * [Bulk insert & delete](model/batchs-operations/bulk-insert.md)
 * [Transactions & Save Points](model/transactions-and-save-points/README.md)
