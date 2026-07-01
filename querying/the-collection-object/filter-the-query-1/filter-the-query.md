@@ -1,107 +1,139 @@
-# Filter the query – The Expression Engine
+# Filter the Query - The Expression Engine
 
-Because Collection represents SQL SELECT query, they offer way to filter the query. Lustra offer the Expression Engine, which is inspired by Sequel. It basically helps you to write complex filter conditions without sacrificing on code expressiveness.
+Collections represent SQL `SELECT` queries. Lustra's expression engine lets you write SQL conditions with Crystal syntax while still generating PostgreSQL SQL.
 
-## The where clause
+## Tuple and Hash Conditions
 
-### Filtering by value
+For simple equality checks, use named arguments, a `NamedTuple`, or a hash:
 
-In this example, let's assume we are looking for first\_name or last\_name equals to Richard. There's many ways to write the condition:
+```crystal
+User.query.where(first_name: "Richard")
+User.query.where({first_name: "Richard", active: true})
+```
 
-```ruby
-# Using the expression engine
-User.query.where{ (first_name == "Richard") | (last_name == "Richard") }
-# Using the "?" syntax
+Tuple/hash conditions also handle arrays, ranges, nil, and subqueries:
+
+```crystal
+User.query.where(id: [1, 2, 3])
+User.query.where(created_at: 1.week.ago..Time.utc)
+User.query.where(deleted_at: nil)
+
+subquery = Post.query.select("user_id").where(published: true)
+User.query.where(id: subquery)
+```
+
+## Template Conditions
+
+Use templates when a small SQL fragment is clearer. Placeholder values are escaped:
+
+```crystal
 User.query.where("first_name = ? OR last_name = ?", "Richard", "Richard")
-# The tuple syntax
-User.query.where("first_name = :value OR last_name = :value", {value: "Richard"})
+User.query.where("first_name = :name OR last_name = :name", name: "Richard")
 ```
 
-For very simple queries, using tuple is the way to go:
+Avoid interpolating user input directly into the SQL string.
 
-```ruby
-User.query.where(first_name: "Richard") # WHERE first_name = 'Richard'
+## Expression Blocks
+
+Use an expression block for richer conditions:
+
+```crystal
+User.query.where { (first_name == "Richard") | (last_name == "Richard") }
+User.query.where { created_at.in?(1.week.ago..Time.utc) }
+User.query.where { posts_count.between(10, 20) }
+User.query.where { email =~ /@example\.com$/i }
 ```
 
-For more complex querying with elegance, see below.
+Common operators:
 
-### Expression Engine: Operators
+| Crystal | SQL meaning |
+| :--- | :--- |
+| `==` / `!=` | equality / inequality, including `IS NULL` and `IS NOT NULL` for nil |
+| `<`, `<=`, `>`, `>=` | comparison |
+| `=~`, `!~` | PostgreSQL regex match / non-match |
+| `&`, `|` | `AND`, `OR` |
+| `~condition` or `not(condition)` | `NOT` |
+| `in?(array)` | `IN (...)` |
+| `in?(range)` | range comparison |
+| `in?(subquery)` | `IN (SELECT ...)` |
+| `between(a, b)` | `BETWEEN a AND b` |
 
-#### Example
+Because Crystal does not let libraries redefine `&&` and `||`, use `&` and `|` for SQL `AND` and `OR`.
 
-```ruby
-y = 1
-User.query.where{ x != y } # WHERE x != 1
-User.query.where{ x == nil } # WHERE x IS NULL
-User.query.where{ x != nil } # WHERE x IS NOT NULL
-User.query.where{ first_name =~ /richard/i } # WHERE x ~* 'richard'
-User.query.where{ first_name !~ /richard/ } # WHERE x !~ 'richard'
-User.query.where{ ~(users.id == 1) } # WHERE NOT( users.id = 1 )
+Always parenthesize each side of `&` and `|`:
+
+```crystal
+User.query.where { (active == true) & (posts_count > 0) }
+User.query.where { (role == "admin") | (role == "owner") }
 ```
 
-{% hint style="warning" %}
-In the example above, if some part of the expression are existing variable in the scope of the code execution, then the value of the variable will be taken in consideration.
+## Local Variables and Column Names
 
-Otherwise, the name will refers to a column, schema or anything related to the PostgreSQL universe.
-{% endhint %}
+The expression engine uses `method_missing` to turn unknown names into SQL variables. If a local variable has the same name as a column, Crystal resolves the local variable first:
 
-List of permitted operators: `<, >, <=, >=, !=, ==, =~, /, *, +, -`
-
-{% hint style="success" %}
-When comparing against nil with == or != operators, the expression engine
-{% endhint %}
-
-### Expression Engine: Var, Raw
-
-As explained above, one of the caveats of the expression engine is the variable scope reduction. Basically, whenever a part of the expression can be reduced to his value in Crystal, the Expression Engine will do it, which can lead to some surprises like in this example:
-
-```ruby
-def find_per_id(id)
-    User.query.where{ id == id }
+```crystal
+def find_user(id)
+  User.query.where { id == id } # wrong: both sides are the local variable
 end
 ```
 
-In this example, id will be reduced to the value of the variable `id` and the comparaison will fail, leading to this:
+Use `var` to force a SQL column:
 
-```ruby
-def find_per_id(id)
-    User.query.where{ true }
+```crystal
+def find_user(id)
+  User.query.where { var("id") == id }
 end
 ```
 
-Thankfully, the expression engine will reject any "static code" and throw an exception at compile time in this case. The good way to do it would be to use var or raw as below:
+`var` quotes each identifier part:
 
-```ruby
-User.query.where{ var("id") == id } # WHERE "id" = ?
-User.query.where{ raw("id") == id } # WHERE id = ?
-User.query.where{ raw("users.id") == id } # WHERE users.id = ?
-User.query.where{ var("users", "id") == id } # WHERE "users"."id" = ?
+```crystal
+User.query.where { var("users", "id") == 1 }
+# "users"."id" = 1
+```
+
+## Raw SQL
+
+Use `raw` for trusted SQL fragments that cannot be expressed through the normal API:
+
+```crystal
+User.query.where { raw("LOWER(email)") == "admin@example.com" }
+User.query.where { raw("COUNT(*)") > 5 }
+```
+
+`raw` pastes SQL into the query. Prefer placeholders for values:
+
+```crystal
+User.query.where { raw("LOWER(email) = ?", email.downcase) }
+User.query.where { raw("LOWER(email) = :email", email: email.downcase) }
 ```
 
 {% hint style="danger" %}
-`raw` can lead to SQL injection, as it pastes without safeguard the string passed as parameter. On other hand, `var` will surround each part of the expression with double quote, to escape the column name _aka PostgreSQL style_.
+Do not build `raw` SQL by interpolating untrusted input. Use placeholders or regular expression/tuple conditions instead.
 {% endhint %}
 
-### Range and array and other methods
+## Custom Operators
 
-Expression engine manage natively range, array and other methods as see below.
+Use `op` for PostgreSQL operators that do not map cleanly to Crystal operators:
 
-Range:
-
-```ruby
-User.query.where{ created_at.in?(5.days.from_now .. Time.local) } # WHERE created_at > ... AND created_at < ...
+```crystal
+Event.query.where { op(payload, raw("'source'"), "?") }
 ```
 
-#### Array / Tuples:
+For JSONB-specific querying, prefer Lustra's JSONB helpers where possible.
 
-```ruby
-arr = ["admin", "superuser"]
-User.query.where{ users.role.in?(arr) }
-# OR:
-User.query.where{ users.role.in?({"admin", "superuser"}) }
+## Negation and OR
+
+`where.not` wraps a condition in `NOT`:
+
+```crystal
+User.query.where.not(active: true)
+User.query.where.not { deleted_at == nil }
 ```
 
-### AND, OR methods
+`or` combines the current condition with a new condition:
 
-`AND` and `OR` operators are respectively mapped as `&` and `|` . As of now, we cannot override the operators `&&` and `||` in Crystal. Since `&` and `|` behave differently in terms of priority order, parenthesis around the condition must be provided.
-
+```crystal
+User.query.where(active: true).or(role: "admin")
+User.query.where { posts_count > 10 }.or { role == "owner" }
+```
