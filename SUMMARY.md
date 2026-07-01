@@ -25,7 +25,7 @@
 * [Batch operations](model/batchs-operations/README.md)
   * [Bulk update](model/batchs-operations/bulk-update.md)
   * [Bulk insert & delete](model/batchs-operations/bulk-insert.md)
-* [Transactions & Save Points](model/transactions-and-save-points/README.md)
+* [Transactions & Savepoints](model/transactions-and-save-points/README.md)
   * [Transaction & Savepoints](model/transactions-and-save-points/transaction.md)
   * [Connection pool](model/transactions-and-save-points/connection-pool.md)
 * [Locks](model/locks.md)
@@ -73,5 +73,5 @@
 
 * [API Documentation](https://crystal-garage.github.io/lustra/)
 * [Inline documentation](https://crystal-garage.github.io/lustra/)
-* [Github repository](https://github.com/crystal-garage/lustra)
+* [GitHub repository](https://github.com/crystal-garage/lustra)
 * [Contributors](https://github.com/crystal-garage/lustra/graphs/contributors)

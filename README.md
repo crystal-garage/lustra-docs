@@ -12,13 +12,13 @@ After reading this guide, you will know:
 
 ## What is Lustra?
 
-Lustra is an ORM \(Object Relational Mapping\) library for Crystal.
+Lustra is an ORM (Object Relational Mapping) library for Crystal.
 
 It provides an Active Record style model layer and a composable SQL builder for PostgreSQL applications.
 
 Lustra is PostgreSQL-only. It is not designed for MariaDB, MySQL, or SQLite. This focus lets it expose PostgreSQL-specific features directly instead of hiding them behind a lowest-common-denominator API.
 
-Lustra started as a fork of [Clear](https://github.com/anykeyh/clear) at version 0.8. It is not compatible with later Clear releases. Since the fork, Lustra has evolved as an independent project with newer Crystal compatibility, expanded PostgreSQL support, additional tests, and behavior documented around production use.
+Lustra started as a fork of Clear at version 0.8. It is not compatible with later Clear releases. Since the fork, Lustra has evolved as an independent project with newer Crystal compatibility, expanded PostgreSQL support, additional tests, and behavior documented around production use.
 
 Lustra is inspired by [Rails Active Record](https://github.com/rails/rails/tree/master/activerecord) and [Sequel](https://github.com/jeremyevans/sequel). Its main goals are:
 
