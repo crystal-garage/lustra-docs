@@ -30,6 +30,78 @@ affected = Lustra::SQL.update(:users)
 
 `Lustra::SQL.execute(sql)` can run a raw SQL string directly. Prefer the query builders or parameterized raw fragments when user-provided values are involved.
 
+## Reporting Queries
+
+Use `Lustra::SQL` when a query returns report data instead of model records.
+This is useful for dashboards, charts, CTEs, and derived tables.
+
+```crystal
+counts = {} of String => Int64
+
+Repository.query
+  .select(
+    "date_trunc('month', created_at)::date AS year_month",
+    "COUNT(*) AS count"
+  )
+  .group_by("year_month")
+  .order_by("year_month", :asc)
+  .fetch do |row|
+    counts[row["year_month"].as(Time).to_s("%Y-%m")] = row["count"].as(Int64)
+  end
+```
+
+For a CTE, build one select query and pass it to `with_cte`:
+
+```crystal
+month_series = Lustra::SQL.select(<<-SQL)
+  generate_series(
+    '2012-11-01'::date,
+    (SELECT date_trunc('month', MAX(created_at)) FROM repositories),
+    '1 month'::interval
+  )::date AS year_month
+  SQL
+
+Lustra::SQL
+  .select({
+    year_month:       "ms.year_month",
+    cumulative_count: "(SELECT COUNT(*) FROM repositories WHERE date_trunc('month', created_at)::date <= ms.year_month)",
+  })
+  .with_cte({month_series: month_series})
+  .from("month_series ms")
+  .order_by("ms.year_month")
+  .fetch do |row|
+    puts "#{row["year_month"]}: #{row["cumulative_count"]}"
+  end
+```
+
+For grouped data from a derived table, pass the derived table SQL to `from`:
+
+```crystal
+Lustra::SQL
+  .select(
+    "dependency_count",
+    "COUNT(*) AS repository_count"
+  )
+  .from(<<-SQL)
+    (
+      SELECT
+        r.id,
+        COUNT(rel.id) AS dependency_count
+      FROM repositories r
+      LEFT JOIN relationships rel ON r.id = rel.master_id
+      GROUP BY r.id
+    ) AS repo_dependency_count
+    SQL
+  .group_by("dependency_count")
+  .order_by("dependency_count", :asc)
+  .fetch do |row|
+    puts "#{row["dependency_count"]}: #{row["repository_count"]}"
+  end
+```
+
+Prefer model collections when the result is a set of model records. Prefer
+`Lustra::SQL` when the result is a custom row shape.
+
 ## Raw Fragments
 
 `Lustra::SQL.raw` creates an SQL fragment with escaped values. It supports positional placeholders and named placeholders.
