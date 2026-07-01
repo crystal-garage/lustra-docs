@@ -27,7 +27,7 @@ end
 `Category#posts` returns a `Post::Collection`:
 
 ```crystal
-category = Category.query.find! { name == "Technology" }
+category = Category.query.find_by! { name == "Technology" }
 
 category.posts.each do |post|
   puts post.name
@@ -75,7 +75,6 @@ The `with_*` helper runs an additional query and fills the relation cache to avo
 has_many relation_name : RelationType,
   foreign_key: "column_name",
   primary_key: "column_name",
-  foreign_key_type: Int64,
   autosave: true
 ```
 
@@ -83,5 +82,4 @@ has_many relation_name : RelationType,
 | :--- | :--- | :--- |
 | `foreign_key` | Column stored on the related model. | current table singularized + `_id` |
 | `primary_key` | Column on the current model matched against the foreign key. | model primary key |
-| `foreign_key_type` | Type metadata for relation generation. | inferred/default |
 | `autosave` | Saves built child records when the parent is saved. | `false` |

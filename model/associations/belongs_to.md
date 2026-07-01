@@ -53,7 +53,7 @@ puts post.category.name
 Assigning a persisted parent updates the foreign key:
 
 ```crystal
-category = Category.query.find! { name == "Technology" }
+category = Category.query.find_by! { name == "Technology" }
 post.category = category
 post.save!
 ```

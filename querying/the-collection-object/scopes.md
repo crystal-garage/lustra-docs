@@ -88,7 +88,7 @@ Now regular queries include the default scope:
 ```crystal
 Post.query.count
 Post.find(1)
-Post.where(title: "Hello")
+Post.query.where(title: "Hello")
 ```
 
 ## `unscoped`
@@ -107,4 +107,3 @@ Post.query.unscoped.where { deleted_at != nil }
 Default scopes are implicit. They affect `query`, scopes, `find`, `find_by`, counts, and association queries built from the model.
 
 Use them sparingly and document why they exist. Prefer explicit scopes when hidden filtering would make code harder to reason about.
-

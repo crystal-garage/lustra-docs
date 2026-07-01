@@ -57,7 +57,7 @@ Post.query.search("orm")
 Search is chainable.
 
 ```crystal
-user = User.find_by! { email == "some_email@example.com" }
+user = User.query.find_by! { email == "some_email@example.com" }
 Post.query.from_user(user).search("orm")
 ```
 

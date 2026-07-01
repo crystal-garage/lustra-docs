@@ -30,13 +30,13 @@ class Product
 
   self.table = "products"
 
-  primary_key name: "product_id", type: :uuid
+  primary_key "product_id", :uuid
 end
 ```
 
-Options:
+Arguments:
 
-| Option | Description |
+| Argument | Description |
 | :--- | :--- |
 | `name` | Database column name. Default: `"id"`. |
 | `type` | Primary key type. Default: `:bigserial`. |

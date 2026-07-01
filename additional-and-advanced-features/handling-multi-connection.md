@@ -21,10 +21,11 @@ Lustra::SQL.add_connection("archive", ENV["ARCHIVE_DATABASE_URL"])
 You can also initialize several connections from a hash.
 
 ```crystal
-Lustra::SQL.init({
-  "default" => ENV["DATABASE_URL"],
-  "legacy" => ENV["LEGACY_DATABASE_URL"],
-})
+connections = {} of Lustra::SQL::Symbolic => String
+connections["default"] = ENV["DATABASE_URL"]
+connections["legacy"] = ENV["LEGACY_DATABASE_URL"]
+
+Lustra::SQL.init(connections)
 ```
 
 ## Model Connection

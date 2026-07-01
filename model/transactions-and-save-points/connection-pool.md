@@ -13,10 +13,11 @@ Lustra::SQL.init(ENV["DATABASE_URL"])
 
 Lustra::SQL.init("analytics", ENV["ANALYTICS_DATABASE_URL"])
 
-Lustra::SQL.init({
-  "default" => ENV["DATABASE_URL"],
-  "analytics" => ENV["ANALYTICS_DATABASE_URL"],
-})
+connections = {} of Lustra::SQL::Symbolic => String
+connections["default"] = ENV["DATABASE_URL"]
+connections["analytics"] = ENV["ANALYTICS_DATABASE_URL"]
+
+Lustra::SQL.init(connections)
 ```
 
 `add_connection` is an alias for registering another named pool.
@@ -34,7 +35,7 @@ Inside a transaction, Lustra reuses the same connection for all SQL calls in the
 ```crystal
 Lustra::SQL.transaction do
   User.create!(email: "one@example.com")
-  User.query.where(email: "one@example.com").fetch_first
+  User.query.where(email: "one@example.com").first
 end
 ```
 

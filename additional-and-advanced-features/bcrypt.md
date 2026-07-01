@@ -6,7 +6,7 @@ Lustra includes a converter for `Crypto::Bcrypt::Password`. Store the encrypted 
 class User
   include Lustra::Model
 
-  primary_key :id, type: :uuid
+  primary_key "id", :uuid
 
   column encrypted_password : Crypto::Bcrypt::Password
 
