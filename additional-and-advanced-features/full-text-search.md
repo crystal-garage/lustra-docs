@@ -33,6 +33,96 @@ add_full_text_searchable(
 )
 ```
 
+## Manual Vector Maintenance
+
+`t.full_text_searchable` is a good fit when the search vector is built from
+columns on the same table. If the vector depends on joined or aggregated data,
+create the `tsvector` column, index, and PostgreSQL triggers manually, then use
+the model macro only for querying.
+
+For example, a repository search vector may include repository fields and tag
+names from a join table:
+
+```crystal
+create_table(:repositories) do |t|
+  t.column :name, :string, null: false
+  t.column :description, :string
+  t.column :tsv, "tsvector"
+
+  t.index :tsv, using: :gin
+end
+```
+
+Then create PostgreSQL trigger functions in a migration:
+
+```crystal
+execute <<-SQL
+  CREATE OR REPLACE FUNCTION tsv_trigger_insert_repositories() RETURNS trigger AS $$
+  begin
+    new.tsv :=
+      setweight(to_tsvector('pg_catalog.simple', coalesce(new.name, '')), 'A') ||
+      setweight(to_tsvector('pg_catalog.simple', coalesce(new.description, '')), 'B');
+    return new;
+  end
+  $$ LANGUAGE plpgsql;
+  SQL
+
+execute <<-SQL
+  CREATE OR REPLACE FUNCTION tsv_trigger_update_repositories() RETURNS trigger AS $$
+  begin
+    SELECT setweight(to_tsvector('pg_catalog.simple', coalesce(r.name, '')), 'A') ||
+           setweight(to_tsvector('pg_catalog.simple', coalesce(r.description, '')), 'B') ||
+           setweight(to_tsvector('pg_catalog.simple', coalesce((string_agg(tags.name, ' ')), '')), 'C')
+      INTO new.tsv
+      FROM repositories r
+      LEFT JOIN repository_tags ON repository_tags.repository_id = r.id
+      LEFT JOIN tags ON tags.id = repository_tags.tag_id
+      WHERE r.id = new.id
+      GROUP BY r.id;
+    return new;
+  end
+  $$ LANGUAGE plpgsql;
+  SQL
+```
+
+Attach the functions to the table:
+
+```crystal
+execute <<-SQL
+  CREATE TRIGGER tsv_insert_repositories BEFORE INSERT
+    ON repositories
+    FOR EACH ROW
+    EXECUTE PROCEDURE tsv_trigger_insert_repositories();
+  SQL
+
+execute <<-SQL
+  CREATE TRIGGER tsv_update_repositories BEFORE UPDATE
+    ON repositories
+    FOR EACH ROW
+    EXECUTE PROCEDURE tsv_trigger_update_repositories();
+  SQL
+```
+
+Finally, point the model macro at the manually maintained vector column:
+
+```crystal
+class Repository
+  include Lustra::Model
+
+  column name : String
+  column description : String?
+
+  full_text_searchable "tsv", catalog: "pg_catalog.simple"
+end
+```
+
+```crystal
+Repository.query.search("orm")
+```
+
+The migration owns how `tsv` is maintained. Lustra only builds the search
+condition against that column.
+
 ## Model
 
 Add `full_text_searchable` to the model.
