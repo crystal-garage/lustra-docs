@@ -88,6 +88,36 @@ Post.query
   .where { var("u", "active") == true }
 ```
 
+## Anti-Joins for Cleanup
+
+A left join plus a `NULL` check is useful for finding records that no longer
+have related rows.
+
+```crystal
+users_without_posts = User
+  .query
+  .left_join(:posts)
+  .where { posts.id.null? }
+
+users_without_posts.each(&.delete)
+```
+
+Use an explicit join block when joining through a table that is not declared as
+an association:
+
+```crystal
+orphan_tags = Tag
+  .query
+  .left_join(:repository_tags) { var("repository_tags", "tag_id") == var("tags", "id") }
+  .where { repository_tags.id.null? }
+
+orphan_tags.each(&.delete)
+```
+
+Database-level foreign keys with `ON DELETE CASCADE` are often a better fit when
+the cleanup should always happen immediately. Anti-join cleanup jobs are useful
+for derived or optional data that is safe to remove later.
+
 ## Join-Based Subqueries
 
 Collections can be used as subqueries:
@@ -109,4 +139,3 @@ Post.query.where { user_id.in?(users_with_more_than_posts(10)) }
 Joining does not eager load associations. If you want to avoid N+1 queries while reading associations, use the generated `with_*` helpers described in [Eager Loading](n+1-query-avoidance.md).
 
 Use joins when the association or table needs to affect filtering, ordering, grouping, or selected fields.
-
