@@ -1,45 +1,59 @@
-# Triggers
+# Callbacks
 
-Lustra provides a way to create triggers on different time of the lifecycle of the model.
+Callbacks let you run code before or after lifecycle events.
 
-## Example usage
-
-```ruby
+```crystal
 class User
-    include Lustra::Model
+  include Lustra::Model
 
-    column first_name : String
-    column last_name : String
+  column id : Int64, primary: true, presence: false
+  column email : String
+  column normalized_email : String?
 
-    def full_name
-        {first_name, last_name}.join(" ")
-    end
+  before(:validate) do |model|
+    user = model.as(User)
+    user.normalized_email = user.email.downcase
+  end
 
-    after :create, :send_email
+  after(:create, :send_welcome_email)
 
-    before(:update) { |m| m.as(User).updated_at = Time.local }
-
-    def send_email
-        EmailManager.send_email(subject: "welcome #{full_name} !", body: "...")
-    end
+  def send_welcome_email
+    EmailManager.send_email(email)
+  end
 end
 ```
 
-## Caveats
+## Block Callbacks
 
-* Calling before/after with a block will return a Lustra::Model as argument. Therefore, you must cast the variable \(`m.as(User)` in example above\).
-* `before/after :action, :method` must be pointing to public method. If the method is private, the call will fail.
+Block callbacks receive `Lustra::Model`, so cast the argument before accessing model-specific methods:
 
-## Trigger list
+```crystal
+before(:validate) do |model|
+  user = model.as(User)
+  user.email = user.email.strip
+end
+```
 
-| Trigger symbol | Description |
+## Method Callbacks
+
+Use the method form when the callback should call a model method:
+
+```crystal
+after(:create, :send_welcome_email)
+```
+
+The method must be public.
+
+## Events
+
+Lustra supports callbacks around these events:
+
+| Event | Triggered by |
 | :--- | :--- |
-| `:validate` | Is triggered before and after calling `valid?` method |
-| `:save` | Is triggered before and after calling `save` method |
-| `:delete` | Is triggered before and after destroying a model |
-| `:create` | Is triggered before and after calling `save` method, if the model is not yet persisted and save execute INSERT request. |
-| `:update` | Is triggered before and after calling `save` method, if the model is already existing and save execute UPDATE request. |
-| `:creation_commited` | **Note: PLANNED FEATURE NOT YET IMPLEMENTED**. Is triggered when a transaction is commited, for each model which has been created during the lifetime of a transaction |
-| `:update_commited` | **Note: PLANNED FEATURE NOT YET IMPLEMENTED.** Is triggered when a transaction is commited, for each model which has been updated during the lifetime of a transaction |
-| `:delete_commited` | **Note: PLANNED FEATURE NOT YET IMPLEMENTED.** Is triggered when a transaction is commited, for each model which has been destroyed during the lifetime of a transaction |
+| `:validate` | `valid?`, `valid!`, and save paths that validate. |
+| `:save` | `save`, `save!`, and association save paths. |
+| `:create` | Saving a new model with an `INSERT`. |
+| `:update` | Saving a persisted model with changed columns. |
+| `:destroy` | `destroy` and `destroy_all`. |
 
+Direct lifecycle-bypassing methods such as `delete`, `delete_all`, `update_column`, `update_columns`, `update_all`, `increment!`, `decrement!`, and `touch` do not run model callbacks.

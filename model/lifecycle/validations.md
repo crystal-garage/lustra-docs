@@ -1,73 +1,97 @@
 # Validations
 
-Validation offers simple way to disable the updating and creation of invalid models to your database.
+Validations decide whether a model can be saved.
 
-## Presence validator
+`valid?` clears existing errors, runs validation callbacks, calls `validate`, checks column presence rules, and returns `true` or `false`:
 
-The presence validation ensure than a column is not `NULL` inside the database. While we encourage to use the `NOT NULL` feature of PostgreSQL, the presence validator is automatically setup via the typing of the column:
+```crystal
+user = User.new
 
-* `column x : String` is assumed to be present
-* `column x : String` can be nilable
-* `column x : String, presence: false` will assume the value cannot be NULL in the database, while not performing any validation check. This is great for values which have default database set value \(ex: serial, timestamp...\)
+unless user.valid?
+  puts user.print_errors
+end
+```
 
-## Custom validation
+`valid!` raises `Lustra::Model::InvalidError` when the model is invalid.
 
-To create a custom validator, just override the `validate` method:
+## Presence Validation
 
-```ruby
+Lustra derives basic presence checks from column types and options:
+
+```crystal
+column name : String
+column nickname : String?
+column id : Int64, primary: true, presence: false
+```
+
+Rules:
+
+| Column | Behavior |
+| :--- | :--- |
+| `column name : String` | Must be present before save. |
+| `column nickname : String?` | May be nil. |
+| `presence: false` | Skips the presence check, useful for database-generated values such as `serial` primary keys. |
+
+Database `NOT NULL` constraints are still recommended. Model validations are application-level checks, not a replacement for database constraints.
+
+## Custom Validation
+
+Override `validate` to add custom rules:
+
+```crystal
 class Article
   include Lustra::Model
 
-  column name : String
-  column description : String
+  column id : Int64, primary: true, presence: false
+  column title : String
+  column body : String
 
   def validate
-    if description_column.present?
-        if description.size < 100
-          add_error("description", "must contains at least 100 characters")
-        end
+    if body_column.defined? && body.size < 100
+      add_error("body", "must contain at least 100 characters")
     end
   end
 end
 ```
 
-{% hint style="warning" %}
-Ensure to check presence of your column while validation. In case of semi-fetching where the column would not have been fetched from the database or not setup, the validator will raise an exception otherwise.
-{% endhint %}
+Check `xxx_column.defined?` before reading a column that may not have been fetched or assigned. Reading an uninitialized column raises an error.
 
-## Helpers methods
+## Validation Helpers
 
-To simplify the writing of validation code, you may want to use `on_presence(field, &block)` or `ensure_than(field, message, &block)` built-in helpers:
+`on_presence` runs a block only when all listed columns are defined:
 
-```ruby
-class Article
-  include Lustra::Model
-
-  column name : String
-  column description : String
-
-  def validate
-    ensure_than :description, "must contains at least 100 characters", &.size.<(100)
+```crystal
+def validate
+  on_presence(:body) do
+    add_error("body", "must contain at least 100 characters") if body.size < 100
   end
 end
 ```
 
-The code above will perform exactly like the previous one, while keeping a more compact syntax.
+`ensure_than` adds an error when the block returns false:
 
-## Error object
-
-Whenever a validation check is failing, an error is created and stored in the model. Error is simply a structure with two fields: `column : String?` and `reason : String`
-
-The list of error can be accessed through `errors` method:
-
-```ruby
-a = Article.new
-a.content = "Lorem ipsum"
-
-unless a.valid?
-  a.errors.each do |err|
-    puts "Error on column: #{err.column} => #{err.reason}"
+```crystal
+def validate
+  ensure_than :body, "must contain at least 100 characters" do |value|
+    value.size >= 100
   end
 end
 ```
 
+## Errors
+
+Validation errors are stored in `errors`:
+
+```crystal
+article = Article.new
+
+unless article.valid?
+  article.errors.each do |error|
+    puts "#{error.column}: #{error.reason}"
+  end
+end
+```
+
+Use `add_error(reason)` for model-level errors and `add_error(column, reason)` for column-specific errors.
+
+`print_errors` returns a grouped string representation that is useful for logs and exception messages.
