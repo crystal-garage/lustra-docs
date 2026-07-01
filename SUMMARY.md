@@ -21,6 +21,7 @@
   * [Persistence](model/lifecycle/persistence.md)
   * [Validations](model/lifecycle/validations.md)
   * [Triggers](model/lifecycle/callbacks.md)
+* [Polymorphic Models](model/polymorphic-models.md)
 * [SQL Views and Read-Only Models](model/sql-views.md)
 * [Batch operations](model/batchs-operations/README.md)
   * [Bulk update](model/batchs-operations/bulk-update.md)
