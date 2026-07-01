@@ -1,63 +1,93 @@
-# belongs\_to
+# `belongs_to`
 
-_Belongs to_ represents an association where the associated object share its primary key in a column of the current object. Let's give an example:
+`belongs_to` is used when the current model stores the foreign key.
+
+Example schema:
 
 ```sql
 CREATE TABLE categories (
-    id bigserial NOT NULL PRIMARY KEY, 
-    name text NOT NULL
-)
+  id bigserial PRIMARY KEY,
+  name text NOT NULL
+);
 
 CREATE TABLE posts (
-    id bigserial NOT NULL PRIMARY KEY,
-    name text NOT NULL,
-    content text,
-    category_id bigint NOT NULL
-)
+  id bigserial PRIMARY KEY,
+  name text NOT NULL,
+  content text,
+  category_id bigint NOT NULL
+);
 ```
 
-In this case, Post belongs to categories, as it maintain a link to the category through `category_id` column.
+`posts.category_id` points to `categories.id`, so `Post` belongs to `Category`:
 
-In Lustra, this relation can be written like this:
+```crystal
+class Category
+  include Lustra::Model
 
-```ruby
+  primary_key
+  column name : String
+
+  has_many posts : Post
+end
+
 class Post
   include Lustra::Model
 
   primary_key
-
   column name : String
   column content : String?
 
   belongs_to category : Category
 end
+```
 
-class Category
+The `belongs_to` macro declares the `category_id` column for you. You do not need to declare it separately unless you want a custom setup.
+
+Use the association like this:
+
+```crystal
+post = Post.query.first!
+puts post.category.name
+```
+
+Assigning a persisted parent updates the foreign key:
+
+```crystal
+category = Category.query.find! { name == "Technology" }
+post.category = category
+post.save!
+```
+
+## Nilable Associations
+
+Use a nilable relation type when the foreign key can be null:
+
+```crystal
+class Post
   include Lustra::Model
+
   primary_key
-
-  column name : String
-
-  has_many posts : Post
+  belongs_to category : Category?, foreign_key_type: Int64?
 end
 ```
 
-* Lustra will take care for you of the declaration of the column `category_id`
-* You may notice `has_many` in Category model. We will go further onto it in the next chapter. 
+This generates `category : Category?` and `category! : Category`.
 
-## Customizing the relation
+## Options
 
-Lustra uses naming convention to infer the name of the foreign key. You may want to override this behavior by adding some parameters:
-
-```ruby
-belongs_to relation_name : RelationType, 
-    foreign_key: "column_name", primary: true|false, 
-    key_type: AnyType?
+```crystal
+belongs_to relation_name : RelationType,
+  foreign_key: "column_name",
+  primary: true,
+  foreign_key_type: Int64,
+  touch: true,
+  counter_cache: true
 ```
 
-| Argument | Description | Default value |
-| :---: | :--- | :---: |
-| `foreign_key` | The column used by the relation | `[underscore_model_name]_id` |
-| `primary` | Set to true if the foreign\_key is also the primary key of this table | `false` |
-| `key_type` | The type of the column. Set to the primary key type of the relative table. | `Int64?` |
-| `no_cache` | Never cache the relation \(note: planned feature\) | `false` |
+| Option | Description | Default |
+| :--- | :--- | :--- |
+| `foreign_key` | Column stored on the current model. | `[relation_name]_id` |
+| `primary` | Marks the generated foreign key column as the primary key. | `false` |
+| `foreign_key_type` | Crystal type for the generated foreign key column. Use a nilable type for optional associations. | `Int64` |
+| `touch` | Touches the parent when the child changes. Use `true` for `updated_at` or a symbol/string for a specific timestamp column. | `nil` |
+| `counter_cache` | Updates a counter column on the parent. Use `true` for the conventional counter name or pass a specific column name. | `nil` |

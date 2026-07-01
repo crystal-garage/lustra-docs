@@ -1,23 +1,64 @@
-# has\_one
+# `has_one`
 
-Has many represents the second counter part of [belongs to](belongs_to.md) relation. It assumes the current model is referenced by an object \(or no objects\) of another model.
+`has_one` is used when another table stores a foreign key pointing to the current model, but only zero or one related record is expected.
 
-Usually, it's used when another model optionally extend the current model by composition. A common example is the usage of `User` and `UserInfo`. `UserInfo` is setup after registration and filling of form from the user. An User can then exists without `UserInfo` – this handle all the connection lifecycle – while `UserInfo` will handle all the optional informations about the user.
+Example:
 
-```ruby
+```crystal
 class User
   include Lustra::Model
 
   primary_key
+  column email : String
 
-  has_one user_info : UserInfo
+  has_one profile : Profile
 end
 
-class UserInfo
+class Profile
   include Lustra::Model
 
   primary_key
+  column display_name : String
 
   belongs_to user : User
 end
 ```
+
+`User#profile` returns `Profile?`:
+
+```crystal
+user = User.query.first!
+
+if profile = user.profile
+  puts profile.display_name
+end
+```
+
+Use the bang variant when the related record must exist:
+
+```crystal
+profile = user.profile!
+```
+
+## Eager Loading
+
+Collections get a generated `with_profile` helper:
+
+```crystal
+User.query.with_profile.each do |user|
+  puts user.profile.try(&.display_name)
+end
+```
+
+## Options
+
+```crystal
+has_one relation_name : RelationType,
+  foreign_key: "column_name",
+  primary_key: "column_name"
+```
+
+| Option | Description | Default |
+| :--- | :--- | :--- |
+| `foreign_key` | Column stored on the related model. | current table singularized + `_id` |
+| `primary_key` | Column on the current model matched against the foreign key. | model primary key |
