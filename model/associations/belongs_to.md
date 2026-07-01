@@ -58,6 +58,78 @@ post.category = category
 post.save!
 ```
 
+## Counter Cache
+
+Use `counter_cache` when the parent model stores the number of child records.
+
+```crystal
+class User
+  include Lustra::Model
+
+  primary_key
+  column name : String
+  column posts_count : Int64 = 0
+
+  has_many posts : Post
+end
+
+class Post
+  include Lustra::Model
+
+  primary_key
+  column title : String
+
+  belongs_to user : User, counter_cache: true
+end
+```
+
+With `counter_cache: true`, Lustra uses the conventional counter column name:
+the child table name plus `_count`. For `Post.table == "posts"`, the parent
+column is `posts_count`.
+
+```crystal
+user = User.create!(name: "Ada")
+Post.create!(title: "First", user: user)
+
+user.reload
+user.posts_count # => 1
+```
+
+The counter is incremented after child creation and decremented after child
+destroy:
+
+```crystal
+post = Post.create!(title: "Second", user: user)
+post.destroy
+```
+
+Use a custom counter column by passing the column name:
+
+```crystal
+class Post
+  include Lustra::Model
+
+  belongs_to user : User, counter_cache: :published_posts_count
+end
+```
+
+If counters become stale, reset them from the parent model class:
+
+```crystal
+User.reset_counters(user.id, Post)
+```
+
+Or from a parent record:
+
+```crystal
+user.reset_counters(Post)
+```
+
+Counter caches rely on model lifecycle callbacks. Direct SQL, `delete`,
+`delete_all`, and other lifecycle-bypassing operations do not update counter
+columns. Use `reset_counters` after those operations if the counter must remain
+accurate.
+
 ## Nilable Associations
 
 Use a nilable relation type when the foreign key can be null:
