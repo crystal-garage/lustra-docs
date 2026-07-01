@@ -1,19 +1,45 @@
-# Cursored fetching
+# Cursor Fetching
 
-When resolving the query, all the models are stored in memory before being processed.
+Normal fetching can load the full result set into memory.
 
-This behavior can overload the memory in case of large dataset of models. To prevent this, Lustra offers the methods `each_with_cursors`and `fetch_with_cursors` :
+For large result sets, use PostgreSQL cursor-based fetching.
 
-```ruby
-User.query.each_with_cursor do |usr|
-    #...
+## Model Cursor Fetching
+
+`each_with_cursor` yields model instances in batches:
+
+```crystal
+User.query.each_with_cursor do |user|
+  puts user.email
 end
 ```
 
-The block retrieved on each call can be tweaked using `batch` optional parameter \(default: 1000 models retrieved per call\) :
+Set the batch size with the first argument:
 
-```ruby
-User.query.each_with_cursor(100) do |usr|
-    #...
+```crystal
+User.query.each_with_cursor(100) do |user|
+  puts user.email
 end
 ```
+
+You can also pass `fetch_columns`:
+
+```crystal
+User.query
+  .select("users.*", "LOWER(email) AS normalized_email")
+  .each_with_cursor(500, fetch_columns: true) do |user|
+    puts user["normalized_email"]
+  end
+```
+
+## Raw Cursor Fetching
+
+`fetch_with_cursor` yields raw result hashes:
+
+```crystal
+User.query.select("id", "email").fetch_with_cursor(count: 500) do |row|
+  puts "#{row["id"]}: #{row["email"]}"
+end
+```
+
+Cursor fetching runs inside a transaction because PostgreSQL cursors are transaction-scoped.
