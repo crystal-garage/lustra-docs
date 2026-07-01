@@ -43,6 +43,53 @@ query.clear_order_bys
 
 `order_by`, `reverse_order_by`, and `clear_order_bys` mutate the collection.
 
+### `reverse_order_by`
+
+`reverse_order_by` flips every existing order direction and also swaps null sort
+behavior. It keeps all current order keys and only changes `ASC/DESC` and
+`NULLS FIRST/LAST`.
+
+```crystal
+query = User.query.order_by(created_at: :desc, last_login_at: {:asc, :nulls_last})
+query.reverse_order_by
+# => ORDER BY "created_at" ASC, "last_login_at" DESC NULLS FIRST
+```
+
+### `in_order_of`
+
+`in_order_of` orders rows by a custom list of values for a column.
+
+```crystal
+Post.query.in_order_of(:status, ["open", "waiting", "closed"]).each do |post|
+  puts post.status
+end
+```
+
+It appends a `CASE` expression to the current `ORDER BY` list and keeps items
+not in the list after those values.
+
+```crystal
+Post.query
+  .where(published: true)
+  .order_by(priority: :desc)
+  .in_order_of(:status, ["high", "medium", "low"])
+```
+
+Use it with symbol columns or raw SQL expressions:
+
+```crystal
+Post.query.in_order_of("\"posts\".\"status\"", ["high", "low"])
+```
+
+### `NULLS FIRST` and `NULLS LAST`
+
+Use the second tuple element to control null sorting.
+
+```crystal
+User.query.order_by(last_login_at: {:desc, :nulls_last})
+User.query.order_by(created_at: {:asc, :nulls_first})
+```
+
 ## Custom Value Ordering
 
 Use `in_order_of` to sort rows by a specific list of values:
