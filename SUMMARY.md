@@ -21,6 +21,7 @@
   * [Persistence](model/lifecycle/persistence.md)
   * [Validations](model/lifecycle/validations.md)
   * [Triggers](model/lifecycle/callbacks.md)
+* [SQL Views and Read-Only Models](model/sql-views.md)
 * [Batchs operations](model/batchs-operations/README.md)
   * [Bulk update](model/batchs-operations/bulk-update.md)
   * [Bulk insert & delete](model/batchs-operations/bulk-insert.md)
