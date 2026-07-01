@@ -1,77 +1,108 @@
 # Converters
 
-Any type from PostgreSQL can be converted using converter objects. By default, Lustra converts already the main type of PostgreSQL.
+Converters translate values between PostgreSQL/Crystal DB values and model column types.
 
-However, custom type may not be supported yet. Lustra offers you the possibility to add a custom converter.
+Lustra registers converters for common built-in types. Custom types need a converter registered with `Lustra::Model::Converter.add_converter`.
 
-## Declare a new converter
+## Declare a Converter
 
-The example below with a converter for a `Color` structure should be straight-forward:
+A converter must provide:
 
-```ruby
-require "./base"
+```crystal
+def self.to_column(value)
+end
 
+def self.to_db(value)
+end
+```
+
+Example:
+
+```crystal
 struct MyApp::Color
   property r : UInt8 = 0
   property g : UInt8 = 0
   property b : UInt8 = 0
-  property a : UInt8 = 0
+  property a : UInt8 = 255
+
+  def self.from_string(value : String)
+    # parse a database value
+  end
 
   def to_s
-    # ...
-  end
-
-  def self.from_string(x : String)
-    # ...
-  end
-
-  def self.from_slice(x : Slice(UInt8))
-    # ...
+    # serialize to a database value
   end
 end
 
 class MyApp::ColorConverter
-  def self.to_column(x) : MyApp::Color?
-    case x
+  def self.to_column(value) : MyApp::Color?
+    case value
     when Nil
       nil
-    when Slice(UInt8)
-      MyApp::Color.from_slice(x)
-    when String
-      MyApp::Color.from_string(x)
+    when MyApp::Color
+      value
     else
-      raise "Cannot convert from #{x.class} to MyApp::Color"
+      MyApp::Color.from_string(value.to_s)
     end
   end
 
-  def self.to_db(x : MyApp::Color?)
-    x.to_s #< css style output, e.g. #12345400
+  def self.to_db(value : MyApp::Color?)
+    value.try(&.to_s)
   end
 end
 
 Lustra::Model::Converter.add_converter("MyApp::Color", MyApp::ColorConverter)
 ```
 
-Then you can use your mapped type in your model:
+Then use the type in a model:
 
-```ruby
-class MyApp::MyModel
+```crystal
+class MyApp::Paint
   include Lustra::Model
-  #...
-  column color : Color #< Automatically get the converter
+
+  column id : Int64, primary: true, presence: false
+  column color : MyApp::Color
 end
 ```
 
-## `converter` option
+When no `converter` option is given, Lustra looks up a converter from the Crystal type name.
 
-Optionally, you may want to use a converter which is not related to the type itself. To do so, you can pass the converter name as optional argument in the `column` declaration:
+## `converter` Option
 
-```ruby
-class MyApp::MyModel
+Use the `converter` option when the converter name should not be inferred from the column type:
+
+```crystal
+Lustra::Model::Converter.add_converter("color_from_hex", MyApp::ColorConverter)
+
+class MyApp::Paint
   include Lustra::Model
-  #...
-  column s : String, converter: "my_custom_converter"
+
+  column id : Int64, primary: true, presence: false
+  column color : MyApp::Color, converter: "color_from_hex"
 end
 ```
 
-By convention, converters which map struct and class directly are named using CamelCase, while converters which are not automatic should be named using the underscore notation.
+Converter lookup happens at compile time. If a converter is missing, Lustra raises a compile-time error explaining that no converter was found for the requested type/name.
+
+## JSON Serializable Converter
+
+For JSON serializable types, Lustra can generate a converter:
+
+```crystal
+class Actor
+  include JSON::Serializable
+
+  property name : String
+end
+
+Lustra.json_serializable_converter(Actor)
+
+class Movie
+  include Lustra::Model
+
+  column id : Int64, primary: true, presence: false
+  column actor : Actor
+end
+```
+
+The generated converter stores the value as JSON and rebuilds the Crystal object when reading from the database.
