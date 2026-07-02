@@ -34,6 +34,7 @@
 
 ## Querying
 
+* [Querying with Lustra](querying/README.md)
 * [The collection object](querying/the-collection-object/README.md)
   * [Filter the query](querying/the-collection-object/filter-the-query-1/README.md)
     * [Filter the query – The Expression Engine](querying/the-collection-object/filter-the-query-1/filter-the-query.md)
