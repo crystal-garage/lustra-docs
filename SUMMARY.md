@@ -23,6 +23,7 @@
   * [JSON Assignment](model/lifecycle/json-assignment.md)
   * [Validations](model/lifecycle/validations.md)
   * [Triggers](model/lifecycle/callbacks.md)
+* [Polymorphic Models vs Associations](model/polymorphic-models-vs-associations.md)
 * [Polymorphic Models](model/polymorphic-models.md)
 * [SQL Views and Read-Only Models](model/sql-views.md)
 * [Batch operations](model/batchs-operations/README.md)

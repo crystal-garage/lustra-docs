@@ -3,6 +3,9 @@
 Use `polymorphic` when several Crystal model classes share one PostgreSQL
 table and are distinguished by a type column.
 
+If you are choosing between polymorphic models and polymorphic associations, see
+[Polymorphic Models vs Associations](polymorphic-models-vs-associations.md).
+
 ## Migration
 
 The shared table needs a type column. The default type column name is `type`,

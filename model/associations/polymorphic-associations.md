@@ -6,6 +6,9 @@ through a pair of columns: `<name>_id` and `<name>_type`.
 This is useful when several models can share the same kind of child record. For
 example, both employees and products can have pictures.
 
+If you are choosing between polymorphic associations and polymorphic models, see
+[Polymorphic Models vs Associations](../polymorphic-models-vs-associations.md).
+
 ## Schema
 
 The child table stores the parent id and the parent type:
