@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="560" viewBox="0 0 920 560" role="img" aria-labelledby="title desc">
+  <title id="title">Lustra ORM Querying example</title>
+  <desc id="desc">Schema diagram showing User, Post, Tag, and PostTag models and their associations.</desc>
+  <style>
+    .bg { fill: #ffffff; }
+    .title { font: 700 28px Arial, sans-serif; fill: #2b2f33; }
+    .note { font: 14px Arial, sans-serif; fill: #5d6670; }
+    .table { fill: #ffffff; stroke: #5f6872; stroke-width: 1; }
+    .head { fill: #bfe3f3; stroke: #5f6872; stroke-width: 1; }
+    .name { font: 700 18px Arial, sans-serif; fill: #0f1720; }
+    .field { font: 15px Arial, sans-serif; fill: #111827; }
+    .line { fill: none; stroke: #666f78; stroke-width: 1.4; }
+    .card { fill: #ffffff; stroke: #cbd5df; stroke-width: 1; }
+    .card-title { font: 700 14px Arial, sans-serif; fill: #374151; }
+    .label { font: 700 15px Arial, sans-serif; fill: #5d6670; }
+  </style>
+
+  <rect class="bg" width="920" height="560" />
+
+  <text class="title" x="40" y="44">Lustra ORM Querying example</text>
+  <text class="note" x="40" y="70">Note: primary keys are shown as id columns. Timestamps are omitted to keep the diagram focused.</text>
+
+  <g id="users">
+    <rect class="table" x="40" y="120" width="220" height="160" />
+    <rect class="head" x="40" y="120" width="220" height="40" />
+    <text class="name" x="52" y="146">User</text>
+    <text class="field" x="54" y="184">id [bigint]</text>
+    <text class="field" x="54" y="214">email [text]</text>
+    <text class="field" x="54" y="244">active [boolean]</text>
+  </g>
+
+  <g id="posts">
+    <rect class="table" x="350" y="110" width="240" height="210" />
+    <rect class="head" x="350" y="110" width="240" height="40" />
+    <text class="name" x="362" y="136">Post</text>
+    <text class="field" x="364" y="174">id [bigint]</text>
+    <text class="field" x="364" y="204">title [text]</text>
+    <text class="field" x="364" y="234">published [boolean]</text>
+    <text class="field" x="364" y="264">created_at [timestamp?]</text>
+    <text class="field" x="364" y="294">user_id [bigint]</text>
+  </g>
+
+  <g id="post_tags">
+    <rect class="table" x="350" y="390" width="240" height="130" />
+    <rect class="head" x="350" y="390" width="240" height="40" />
+    <text class="name" x="362" y="416">PostTag</text>
+    <text class="field" x="364" y="454">id [bigint]</text>
+    <text class="field" x="364" y="484">post_id [bigint]</text>
+    <text class="field" x="364" y="514">tag_id [bigint]</text>
+  </g>
+
+  <g id="tags">
+    <rect class="table" x="680" y="390" width="200" height="100" />
+    <rect class="head" x="680" y="390" width="200" height="40" />
+    <text class="name" x="692" y="416">Tag</text>
+    <text class="field" x="694" y="454">id [bigint]</text>
+    <text class="field" x="694" y="484">name [text]</text>
+  </g>
+
+  <path class="line" d="M260 200 H350" />
+  <text class="label" x="272" y="190">1</text>
+  <text class="label" x="318" y="190">0..*</text>
+
+  <path class="line" d="M470 320 V390" />
+  <text class="label" x="482" y="342">1</text>
+  <text class="label" x="482" y="374">0..*</text>
+
+  <path class="line" d="M590 455 H680" />
+  <text class="label" x="604" y="445">0..*</text>
+  <text class="label" x="650" y="445">1</text>
+
+  <path class="line" d="M590 215 H740 Q760 215 760 235 V390" />
+  <text class="label" x="604" y="205">0..*</text>
+  <text class="label" x="770" y="372">0..*</text>
+
+  <g id="legend">
+    <rect class="card" x="40" y="335" width="220" height="140" rx="6" />
+    <text class="card-title" x="56" y="363">Associations</text>
+    <text class="field" x="56" y="394">User has_many posts</text>
+    <text class="field" x="56" y="424">Post belongs_to user</text>
+    <text class="field" x="56" y="454">Post has_many tags</text>
+  </g>
+</svg>

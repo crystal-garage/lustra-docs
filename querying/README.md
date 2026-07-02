@@ -17,6 +17,8 @@ After reading this guide, you will know:
 
 Examples in this guide use a small model set:
 
+![Lustra ORM querying example schema](../assets/lustra-querying-example.svg)
+
 ```crystal
 class User
   include Lustra::Model
