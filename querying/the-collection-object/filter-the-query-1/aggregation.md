@@ -24,8 +24,8 @@ When the query contains `limit`, `offset`, or `group_by`, Lustra wraps the query
 ```crystal
 max_id = User.query.max("id", Int64)
 min_id = User.query.min("id", Int64)
-average_time = User.query.avg("time_connected", Float64)
-total_score = User.query.sum("score")
+average_id = User.query.avg("id", Float64)
+total_ids = User.query.sum("id")
 ```
 
 `min`, `max`, and `avg` require the expected return type. `sum` currently returns `Float64`.
@@ -33,7 +33,7 @@ total_score = User.query.sum("score")
 `sum` does not sanitize the `field` input, so pass trusted SQL fragments only.
 
 ```crystal
-total_stars = Repository.query.where(language: "Crystal").sum("stars")
+total_post_ids = Post.query.where(published: true).sum("id")
 # => Float64
 ```
 

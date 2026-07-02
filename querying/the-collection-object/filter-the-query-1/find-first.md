@@ -7,8 +7,8 @@ These helpers fetch one record, a small slice of records, or refine pagination.
 `find` looks up records by primary key.
 
 ```crystal
-product = Product.query.find(1234)  # Product?
-product = Product.query.find!(1234) # Product or raises
+post = Post.query.find(1234)  # Post?
+post = Post.query.find!(1234) # Post or raises
 ```
 
 `find` returns `nil` when no row exists. `find!` raises `Lustra::SQL::RecordNotFoundError`.
@@ -16,8 +16,8 @@ product = Product.query.find!(1234) # Product or raises
 You can also pass an array of primary keys:
 
 ```crystal
-products = Product.query.find([1, 2, 3])  # Array(Product)
-products = Product.query.find!([1, 2, 3]) # raises if any id is missing
+posts = Post.query.find([1, 2, 3])  # Array(Post)
+posts = Post.query.find!([1, 2, 3]) # raises if any id is missing
 ```
 
 ## `find_by` and `find_by!`
@@ -47,13 +47,13 @@ User.find_by!(email: "user@example.com")
 `first` returns the first matching record or `nil`:
 
 ```crystal
-product = Product.query.order_by(created_at: "DESC").first
+post = Post.query.order_by(created_at: :desc).first
 ```
 
 `first!` returns the record or raises `Lustra::SQL::RecordNotFoundError`:
 
 ```crystal
-product = Product.query.order_by(created_at: "DESC").first!
+post = Post.query.order_by(created_at: :desc).first!
 ```
 
 When no explicit order is set, Lustra applies primary-key ordering before fetching the first row.
@@ -63,13 +63,13 @@ When no explicit order is set, Lustra applies primary-key ordering before fetchi
 `last` returns the last record according to the current ordering:
 
 ```crystal
-product = Product.query.order_by(created_at: "DESC").last
+post = Post.query.order_by(created_at: :desc).last
 ```
 
 `last!` raises when no row exists:
 
 ```crystal
-product = Product.query.order_by(created_at: "DESC").last!
+post = Post.query.order_by(created_at: :desc).last!
 ```
 
 `last` works by reversing the current order and fetching one row. If no order is set, Lustra uses primary-key ordering.
@@ -79,8 +79,8 @@ product = Product.query.order_by(created_at: "DESC").last!
 `limit` and `offset` refine the collection:
 
 ```crystal
-products = Product.query
-  .order_by(id: "ASC")
+posts = Post.query
+  .order_by(id: :asc)
   .limit(20)
   .offset(40)
 ```
@@ -90,7 +90,7 @@ This fetches up to 20 records after skipping 40 records.
 Because collections are mutable, `limit` and `offset` change the collection they are called on. Use `dup` if you need to keep a reusable base query:
 
 ```crystal
-base = Product.query.order_by(id: "ASC")
+base = Post.query.order_by(id: :asc)
 page_1 = base.dup.limit(20).offset(0)
 page_2 = base.dup.limit(20).offset(20)
 ```
@@ -100,26 +100,26 @@ page_2 = base.dup.limit(20).offset(20)
 `[]` and `[]?` resolve the query. They return records, not reusable collections.
 
 ```crystal
-product = Product.query.order_by(id: "ASC")[10]  # Product or raises
-product = Product.query.order_by(id: "ASC")[10]? # Product?
+post = Post.query.order_by(id: :asc)[10]  # Post or raises
+post = Post.query.order_by(id: :asc)[10]? # Post?
 ```
 
 `[]` with a range returns an array:
 
 ```crystal
-products = Product.query.order_by(id: "ASC")[10..20] # Array(Product)
+posts = Post.query.order_by(id: :asc)[10..20] # Array(Post)
 ```
 
 Internally, array-style access applies `offset` and `limit` to the collection. If you need to keep the original collection unchanged, call it on a duplicate:
 
 ```crystal
-products = Product.query.order_by(id: "ASC")
-slice = products.dup[10..20]
+posts = Post.query.order_by(id: :asc)
+slice = posts.dup[10..20]
 ```
 
 For general array indexing after loading records, use `to_a`:
 
 ```crystal
-products = Product.query.order_by(id: "ASC").to_a
-product = products[10]?
+posts = Post.query.order_by(id: :asc).to_a
+post = posts[10]?
 ```

@@ -9,27 +9,24 @@ model's `attributes` hash.
 
 ```crystal
 posts = Post.query
-  .select(
-    "posts.*",
-    "COUNT(comments.id) AS comments_count"
-  )
-  .left_join(:comments) { comments.post_id == posts.id }
+  .select("posts.*", "COUNT(post_tags.id) AS tags_count")
+  .left_join(:post_tags) { post_tags.post_id == posts.id }
   .group_by("posts.id")
 
 posts.each(fetch_columns: true) do |post|
   puts post.title
-  puts post.attributes["comments_count"]
+  puts post.attributes["tags_count"]
 end
 ```
 
-`post.title` uses the generated model accessor. `comments_count` is not a model
+`post.title` uses the generated model accessor. `tags_count` is not a model
 column, so it is read from `attributes`.
 
 You can also use `[]` and `[]?` on the model:
 
 ```crystal
-post["comments_count"]  # raises if the key is missing
-post["comments_count"]? # nil if the key is missing
+post["tags_count"]  # raises if the key is missing
+post["tags_count"]? # nil if the key is missing
 ```
 
 `fetch_columns: true` is available on model-fetching helpers such as:
@@ -50,17 +47,12 @@ post["comments_count"]? # nil if the key is missing
 This pattern is useful for reusable computed fields:
 
 ```crystal
-repositories = Repository.query
-  .select(
-    "repositories.*",
-    "(select COUNT(*) from relationships r WHERE r.dependency_id = repositories.id) AS dependents_count",
-    "(select COUNT(*) from relationships r WHERE r.master_id = repositories.id) AS dependencies_count"
-  )
+posts = Post.query
+  .with_count(:tags, alias_name: "tags_count")
 
-repositories.each(fetch_columns: true) do |repository|
-  puts repository.name
-  puts repository["dependents_count"]
-  puts repository["dependencies_count"]
+posts.each(fetch_columns: true) do |post|
+  puts post.title
+  puts post["tags_count"]
 end
 ```
 
@@ -68,10 +60,10 @@ If you only need raw rows and not models, use `fetch` instead:
 
 ```crystal
 Post.query
-  .select("posts.id", "COUNT(comments.id) AS comments_count")
-  .left_join(:comments) { comments.post_id == posts.id }
+  .select("posts.id", "COUNT(post_tags.id) AS tags_count")
+  .left_join(:post_tags) { post_tags.post_id == posts.id }
   .group_by("posts.id")
   .fetch do |row|
-    puts row["comments_count"]
+    puts row["tags_count"]
   end
 ```

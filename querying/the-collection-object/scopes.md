@@ -8,11 +8,9 @@ class Post
 
   column id : Int64, primary: true, presence: false
   column published : Bool
-  column view_count : Int32
   column created_at : Time
 
   scope("published") { where(published: true) }
-  scope("popular") { |min_views| where { view_count >= min_views } }
   scope("recent") { where { created_at > 7.days.ago }.order_by(created_at: :desc) }
 end
 ```
@@ -21,14 +19,14 @@ Scopes are available on the model class:
 
 ```crystal
 Post.published
-Post.popular(100)
+Post.recent
 ```
 
 They are also available on collections, so they can be chained:
 
 ```crystal
 Post.published.recent
-Post.published.popular(50).first
+Post.published.recent.first
 ```
 
 ## Scope Arguments
@@ -36,7 +34,7 @@ Post.published.popular(50).first
 Scopes can receive arguments:
 
 ```crystal
-scope("with_status") { |status| where(status: status) }
+scope("with_title") { |title| where(title: title) }
 ```
 
 Scopes can also receive splat arguments:
@@ -52,20 +50,14 @@ Use scopes for reusable filtering, ordering, or query composition. Keep them sma
 Scopes can also add computed SQL fields that are reused by several queries.
 
 ```crystal
-class Repository
+class Post
   include Lustra::Model
 
   column id : Int64, primary: true, presence: false
-  column name : String
+  column title : String
 
-  scope("with_counts") do
-    self
-      .select(
-        "repositories.*",
-        "(select COUNT(*) from relationships r WHERE r.dependency_id = repositories.id) AS dependents_count",
-        "(select COUNT(*) from relationships r WHERE r.master_id = repositories.id) AS dependencies_count"
-      )
-      .group_by("repositories.id")
+  scope("with_tag_count") do
+    with_count(:tags, alias_name: "tags_count")
   end
 end
 ```
@@ -73,11 +65,11 @@ end
 The scope can be chained with filters, ordering, and pagination:
 
 ```crystal
-repositories = Repository
+posts = Post
   .query
-  .with_counts
-  .where(ignore: false)
-  .order_by("dependents_count", :desc)
+  .with_tag_count
+  .where(published: true)
+  .order_by("tags_count", :desc)
   .limit(20)
 ```
 
@@ -85,9 +77,9 @@ When a scope selects fields that are not model columns, fetch them with
 `fetch_columns: true` and read them from `attributes` or `[]`.
 
 ```crystal
-repositories.each(fetch_columns: true) do |repository|
-  puts repository.name
-  puts repository["dependents_count"]
+posts.each(fetch_columns: true) do |post|
+  puts post.title
+  puts post["tags_count"]
 end
 ```
 

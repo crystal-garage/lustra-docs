@@ -8,7 +8,7 @@
 
 ```crystal
 Post.query.where(user_id: 1).each do |post|
-  puts post.name
+  puts post.title
 end
 ```
 
@@ -16,11 +16,11 @@ Pass `fetch_columns: true` when you also need custom selected fields in `attribu
 
 ```crystal
 Post.query
-  .select("posts.*", "COUNT(comments.id) AS comments_count")
-  .left_join(:comments) { comments.post_id == posts.id }
+  .select("posts.*", "COUNT(post_tags.id) AS tags_count")
+  .left_join(:post_tags) { post_tags.post_id == posts.id }
   .group_by("posts.id")
   .each(fetch_columns: true) do |post|
-    puts post.attributes["comments_count"]
+    puts post.attributes["tags_count"]
   end
 ```
 
@@ -48,24 +48,24 @@ Use `pluck_col` when you only need one column and do not need model instances:
 names = User.query
   .where(active: true)
   .order_by(id: :asc)
-  .pluck_col("first_name")
+  .pluck_col("email")
 ```
 
 Without a type argument, `pluck_col` returns `Array(Lustra::SQL::Any)`. Pass a
 type when you want a typed array:
 
 ```crystal
-names = User.query.pluck_col("first_name", String)
+emails = User.query.pluck_col("email", String)
 ids = User.query.pluck_col(:id, Int64)
 ```
 
 Use `pluck` for multiple columns:
 
 ```crystal
-users = User.query.pluck("first_name", "last_name")
+posts = Post.query.pluck("title", "published")
 
-users.each do |(first_name, last_name)|
-  puts "#{first_name} #{last_name}"
+posts.each do |(title, published)|
+  puts "#{title}: #{published}"
 end
 ```
 
@@ -73,8 +73,8 @@ Named `pluck` returns typed tuples:
 
 ```crystal
 users = User.query.pluck(
-  "first_name": String,
-  "UPPER(last_name)": String
+  "email": String,
+  "LOWER(email)": String
 )
 ```
 
@@ -108,7 +108,7 @@ user = users[10]?
 
 ```crystal
 Post.query.where(user_id: 1).fetch do |row|
-  puts "#{row["id"]} - #{row["name"]}"
+  puts "#{row["id"]} - #{row["title"]}"
 end
 ```
 

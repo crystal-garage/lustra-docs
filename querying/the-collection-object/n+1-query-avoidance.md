@@ -80,10 +80,10 @@ User.query.with_posts.to_a
 Nested eager loading adds more queries:
 
 ```crystal
-User.query.with_posts(&.with_category).to_a
+User.query.with_posts(&.with_tags).to_a
 # users query
 # posts query
-# categories query
+# tags query
 ```
 
 Use eager loading when you will actually read the association for many parent records. Avoid it when only a few records need the association.
@@ -94,7 +94,7 @@ Pass a block to refine the association query:
 
 ```crystal
 User.query.with_posts do |posts|
-  posts.where(published: true).order_by(created_at: "DESC")
+  posts.where(published: true).order_by(created_at: :desc)
 end
 ```
 
@@ -102,14 +102,14 @@ You can nest eager loading:
 
 ```crystal
 User.query.with_posts do |posts|
-  posts.where(published: true).with_category
+  posts.where(published: true).with_tags
 end
 ```
 
 The shorthand form is useful with scopes:
 
 ```crystal
-User.query.with_posts(&.published.with_category)
+User.query.with_posts(&.published.with_tags)
 ```
 
 ## Custom Fields
@@ -129,4 +129,3 @@ Use this only when you need custom selected fields from the eager-loaded relatio
 `with_*` uses the parent query as a subquery when loading related records. If the parent query is expensive, the eager-loading query can also be expensive.
 
 For large or complex parent queries, inspect the generated SQL and PostgreSQL query plan.
-

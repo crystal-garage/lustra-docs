@@ -9,10 +9,10 @@ Use `paginate` to fetch one page of records:
 per_page = 20
 page = 3
 
-repositories = Repository
+posts = Post
   .query
-  .where(ignore: false)
-  .order_by(stars_count: :desc)
+  .where(published: true)
+  .order_by(created_at: :desc)
   .order_by(id: :asc)
   .paginate(page: page, per_page: per_page)
 ```
@@ -24,8 +24,8 @@ column can have duplicate values, add a stable tie-breaker such as the primary
 key.
 
 ```crystal
-Repository.query
-  .order_by(stars_count: :desc)
+Post.query
+  .order_by(created_at: :desc)
   .order_by(id: :asc)
 ```
 
@@ -35,24 +35,24 @@ Repository.query
 After calling it, the collection exposes pagination metadata:
 
 ```crystal
-base = Repository
+base = Post
   .query
-  .where(ignore: false)
+  .where(published: true)
 
-repositories = base
-  .order_by(stars_count: :desc)
+posts = base
+  .order_by(created_at: :desc)
   .order_by(id: :asc)
   .paginate(page: page, per_page: per_page)
 
-repositories.total_entries # total matching records
-repositories.total_pages
-repositories.current_page
-repositories.per_page
-repositories.previous_page
-repositories.next_page
-repositories.first_page?
-repositories.last_page?
-repositories.out_of_bounds?
+posts.total_entries # total matching records
+posts.total_pages
+posts.current_page
+posts.per_page
+posts.previous_page
+posts.next_page
+posts.first_page?
+posts.last_page?
+posts.out_of_bounds?
 ```
 
 Because collections are mutable, `paginate` changes the collection by clearing
@@ -60,11 +60,11 @@ existing `limit` and `offset`, counting the records, and then applying the page
 limit and offset. Use `dup` when you want to preserve a reusable base query:
 
 ```crystal
-base = Repository.query.where(ignore: false)
+base = Post.query.where(published: true)
 
-repositories = base
+posts = base
   .dup
-  .order_by(stars_count: :desc)
+  .order_by(created_at: :desc)
   .order_by(id: :asc)
   .paginate(page: page, per_page: per_page)
 ```
@@ -74,7 +74,7 @@ repositories = base
 Applications can use `out_of_bounds?` to detect a page past the end.
 
 ```crystal
-raise "page out of range" if repositories.out_of_bounds?
+raise "page out of range" if posts.out_of_bounds?
 ```
 
 Use the same base query for pagination, so the total and the records are
@@ -85,10 +85,10 @@ calculated from the same filters.
 Association collections can be paginated the same way:
 
 ```crystal
-repositories = user
-  .repositories
-  .where(ignore: false)
-  .order_by(stars_count: :desc)
+posts = user
+  .posts
+  .where(published: true)
+  .order_by(created_at: :desc)
   .order_by(id: :asc)
   .paginate(page: page, per_page: per_page)
 ```
@@ -101,9 +101,9 @@ metadata:
 ```crystal
 offset = (page - 1) * per_page
 
-repositories = Repository
+posts = Post
   .query
-  .order_by(stars_count: :desc)
+  .order_by(created_at: :desc)
   .order_by(id: :asc)
   .limit(per_page)
   .offset(offset)
