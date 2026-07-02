@@ -172,6 +172,54 @@ For namespaced models, use the full class name:
 Picture.query.where(imageable_type: "Catalog::Product")
 ```
 
+## Concrete Type Aliases
+
+Sometimes you want to query a single concrete parent type with regular
+association helpers. Declare a second `belongs_to` that uses the same
+polymorphic foreign key and fixes the stored type with `polymorphic_type:`.
+
+```crystal
+class Picture
+  include Lustra::Model
+
+  primary_key
+  column name : String
+
+  belongs_to imageable : Employee | Product, polymorphic: true
+  belongs_to employee : Employee,
+    foreign_key: "imageable_id",
+    polymorphic_type: "Employee"
+end
+```
+
+The concrete alias checks `imageable_type` before loading the parent, so a
+product picture does not accidentally resolve to an employee with the same id.
+
+```crystal
+picture.employee
+Picture.query.with_employee
+```
+
+Because `employee` points to one table, it can also be used by SQL association
+helpers:
+
+```crystal
+Picture.query.join(:employee)
+Picture.query.where.associated(:employee)
+Picture.query.where.missing(:employee)
+Picture.query.with_count(:employee, alias_name: "employee_count")
+```
+
+The join includes both the foreign key and the fixed type:
+
+```sql
+SELECT pictures.*
+FROM pictures
+INNER JOIN employees
+  ON pictures.imageable_id = employees.id
+ AND pictures.imageable_type = 'Employee'
+```
+
 ## SQL Join Limitations
 
 Polymorphic `belongs_to` associations cannot be auto-joined as a single SQL
@@ -186,8 +234,8 @@ Picture.query.where.missing(:imageable)
 Picture.query.with_count(:imageable)
 ```
 
-Use direct filters on `<name>_id` and `<name>_type`, or query each concrete
-target type separately.
+Use direct filters on `<name>_id` and `<name>_type`, query each concrete target
+type separately, or declare a concrete type alias with `polymorphic_type:`.
 
 ## Namespaced Models
 
