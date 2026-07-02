@@ -13,6 +13,7 @@ Lustra supports the common Active Record style associations:
 | `has_many` | The related model stores a foreign key pointing back to the current model. |
 | `has_many through` | Models are connected through a join model/table. |
 | `has_one` | The related model stores a foreign key, but only zero or one related record is expected. |
+| Polymorphic associations | One child model can belong to one of several parent model types. |
 
 Associations generate query helpers, assignment helpers, and eager-loading helpers such as `with_posts`.
 
@@ -62,3 +63,5 @@ tags = post
   .where { name =~ /orm/i }
   .order_by(name: :asc)
 ```
+
+See [Polymorphic Associations](polymorphic-associations.md) when a child model can belong to more than one parent model type.

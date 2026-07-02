@@ -17,6 +17,7 @@
   * [has\_many](model/associations/has\_many.md)
   * [has\_many through](model/associations/has\_many-through.md)
   * [has\_one](model/associations/has\_one.md)
+  * [Polymorphic Associations](model/associations/polymorphic-associations.md)
 * [Lifecycle](model/lifecycle/README.md)
   * [Persistence](model/lifecycle/persistence.md)
   * [JSON Assignment](model/lifecycle/json-assignment.md)
