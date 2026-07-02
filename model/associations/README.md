@@ -26,10 +26,10 @@ you can refine an association query before executing it.
 ```crystal
 user = User.find!(1)
 
-repositories = user
-  .repositories
-  .where(ignore: false)
-  .order_by(stars_count: :desc)
+posts = user
+  .posts
+  .where(published: true)
+  .order_by(created_at: :desc)
   .limit(20)
 ```
 
@@ -37,8 +37,8 @@ The query is executed by terminal methods such as `each`, `to_a`, `first`,
 `count`, or `empty?`.
 
 ```crystal
-repositories.each do |repository|
-  puts repository.name
+posts.each do |post|
+  puts post.title
 end
 ```
 
@@ -46,19 +46,19 @@ Association collections can also be combined with scopes and eager-loading
 helpers:
 
 ```crystal
-repositories = user
-  .repositories
+posts = user
+  .posts
   .published
   .with_tags
-  .with_counts
-  .order_by("repositories.id", :asc)
+  .with_count(:tags, alias_name: "tags_count")
+  .order_by("posts.id", :asc)
 ```
 
 The same pattern works from `has_many through` associations:
 
 ```crystal
-dependencies = repository
-  .dependencies
-  .where { relationships.development.false? }
-  .with_user
+tags = post
+  .tags
+  .where { name =~ /orm/i }
+  .order_by(name: :asc)
 ```

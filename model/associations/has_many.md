@@ -2,14 +2,15 @@
 
 `has_many` is the inverse of a `belongs_to` relation. The related model stores the foreign key.
 
-Using the category/post schema from [`belongs_to`](belongs_to.md):
+Using the user/post schema from [`belongs_to`](belongs_to.md):
 
 ```crystal
-class Category
+class User
   include Lustra::Model
 
   primary_key
-  column name : String
+  column email : String
+  column active : Bool = true
 
   has_many posts : Post
 end
@@ -18,30 +19,31 @@ class Post
   include Lustra::Model
 
   primary_key
-  column name : String
+  column title : String
+  column published : Bool = false
 
-  belongs_to category : Category
+  belongs_to user : User
 end
 ```
 
-`Category#posts` returns a `Post::Collection`:
+`User#posts` returns a `Post::Collection`:
 
 ```crystal
-category = Category.query.find_by! { name == "Technology" }
+user = User.query.find_by! { email == "ada@example.com" }
 
-category.posts.each do |post|
-  puts post.name
+user.posts.each do |post|
+  puts post.title
 end
 ```
 
 Because the relation returns a collection, you can refine it before fetching:
 
 ```crystal
-category.posts
-  .where { name =~ /^[0-9]/i }
-  .order_by(name: "ASC")
+user.posts
+  .where(published: true)
+  .order_by(created_at: :desc)
   .each do |post|
-    puts post.name
+    puts post.title
   end
 ```
 
@@ -50,7 +52,7 @@ category.posts
 You can append a record to a `has_many` relation:
 
 ```crystal
-category.posts << Post.new({name: "A good post"})
+user.posts << Post.new({title: "A good post"})
 ```
 
 Lustra sets the relation foreign key and saves the appended record.
@@ -61,33 +63,33 @@ By default, `build` creates an unsaved child record and does not save it when
 the parent is saved.
 
 ```crystal
-class Category
+class User
   include Lustra::Model
 
   has_many posts : Post
 end
 
-category = Category.new({name: "Technology"})
-category.posts.build({name: "Draft"})
-category.save!
+user = User.new({email: "ada@example.com"})
+user.posts.build({title: "Draft"})
+user.save!
 
-category.posts.count # => 0
+user.posts.count # => 0
 ```
 
 Use `autosave: true` when built child records should be saved with the parent.
 
 ```crystal
-class Category
+class User
   include Lustra::Model
 
   has_many posts : Post, autosave: true
 end
 
-category = Category.new({name: "Technology"})
-category.posts.build({name: "Draft"})
-category.save!
+user = User.new({email: "ada@example.com"})
+user.posts.build({title: "Draft"})
+user.save!
 
-category.posts.count # => 1
+user.posts.count # => 1
 ```
 
 Autosave applies to records built through the association collection. Appending
@@ -98,9 +100,9 @@ with `<<` still saves the appended record immediately.
 Collections get a generated `with_posts` helper:
 
 ```crystal
-Category.query.with_posts.each do |category|
-  category.posts.each do |post|
-    puts post.name
+User.query.with_posts.each do |user|
+  user.posts.each do |post|
+    puts post.title
   end
 end
 ```

@@ -5,27 +5,29 @@
 Example schema:
 
 ```sql
-CREATE TABLE categories (
+CREATE TABLE users (
   id bigserial PRIMARY KEY,
-  name text NOT NULL
+  email text NOT NULL,
+  active boolean NOT NULL DEFAULT TRUE
 );
 
 CREATE TABLE posts (
   id bigserial PRIMARY KEY,
-  name text NOT NULL,
-  content text,
-  category_id bigint NOT NULL
+  title text NOT NULL,
+  published boolean NOT NULL DEFAULT FALSE,
+  user_id bigint NOT NULL REFERENCES users(id)
 );
 ```
 
-`posts.category_id` points to `categories.id`, so `Post` belongs to `Category`:
+`posts.user_id` points to `users.id`, so `Post` belongs to `User`:
 
 ```crystal
-class Category
+class User
   include Lustra::Model
 
   primary_key
-  column name : String
+  column email : String
+  column active : Bool = true
 
   has_many posts : Post
 end
@@ -34,27 +36,27 @@ class Post
   include Lustra::Model
 
   primary_key
-  column name : String
-  column content : String?
+  column title : String
+  column published : Bool = false
 
-  belongs_to category : Category
+  belongs_to user : User
 end
 ```
 
-The `belongs_to` macro declares the `category_id` column for you. You do not need to declare it separately unless you want a custom setup.
+The `belongs_to` macro declares the `user_id` column for you. You do not need to declare it separately unless you want a custom setup.
 
 Use the association like this:
 
 ```crystal
 post = Post.query.first!
-puts post.category.name
+puts post.user.email
 ```
 
 Assigning a persisted parent updates the foreign key:
 
 ```crystal
-category = Category.query.find_by! { name == "Technology" }
-post.category = category
+user = User.query.find_by! { email == "ada@example.com" }
+post.user = user
 post.save!
 ```
 
@@ -67,7 +69,7 @@ class User
   include Lustra::Model
 
   primary_key
-  column name : String
+  column email : String
   column posts_count : Int64 = 0
 
   has_many posts : Post
@@ -88,7 +90,7 @@ the child table name plus `_count`. For `Post.table == "posts"`, the parent
 column is `posts_count`.
 
 ```crystal
-user = User.create!(name: "Ada")
+user = User.create!(email: "ada@example.com")
 Post.create!(title: "First", user: user)
 
 user.reload
@@ -139,11 +141,11 @@ class Post
   include Lustra::Model
 
   primary_key
-  belongs_to category : Category?, foreign_key_type: Int64?
+  belongs_to user : User?, foreign_key_type: Int64?
 end
 ```
 
-This generates `category : Category?` and `category! : Category`.
+This generates `user : User?` and `user! : User`.
 
 ## Options
 

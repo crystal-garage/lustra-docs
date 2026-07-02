@@ -2,7 +2,8 @@
 
 `has_one` is used when another table stores a foreign key pointing to the current model, but only zero or one related record is expected.
 
-Example:
+This example extends the same `User` model used in the querying guide with a
+one-to-one `Profile` model:
 
 ```crystal
 class User
@@ -10,6 +11,7 @@ class User
 
   primary_key
   column email : String
+  column active : Bool = true
 
   has_one profile : Profile
 end

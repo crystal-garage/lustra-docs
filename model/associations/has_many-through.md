@@ -7,7 +7,7 @@ Example schema:
 ```sql
 CREATE TABLE posts (
   id bigserial PRIMARY KEY,
-  name text NOT NULL
+  title text NOT NULL
 );
 
 CREATE TABLE tags (
@@ -27,10 +27,10 @@ Define a join model for the join table:
 class PostTag
   include Lustra::Model
 
-  self.table = "post_tags"
+  primary_key
 
-  belongs_to post : Post, foreign_key_type: Int64?
-  belongs_to tag : Tag, foreign_key_type: Int64?
+  belongs_to post : Post
+  belongs_to tag : Tag
 end
 ```
 
@@ -41,7 +41,7 @@ class Post
   include Lustra::Model
 
   primary_key
-  column name : String
+  column title : String
 
   has_many tags : Tag, through: PostTag
 end
@@ -101,12 +101,12 @@ class Post
   include Lustra::Model
 
   primary_key
-  column name : String
+  column title : String
 
   has_many tags : Tag, through: PostTag, autosave: true
 end
 
-post = Post.new({name: "Lustra guide"})
+post = Post.new({title: "Lustra guide"})
 post.tags.build({name: "orm"})
 post.save!
 
@@ -133,15 +133,15 @@ For advanced queries, you may need to remove that `DISTINCT` clause before
 adding custom select fields, grouping, or ordering.
 
 ```crystal
-repositories = tag
-  .repositories
+posts = tag
+  .posts
   .clear_distinct
   .select(
-    "repositories.*",
-    "(select COUNT(*) from relationships r WHERE r.dependency_id = repositories.id) AS dependents_count"
+    "posts.*",
+    "COUNT(post_tags.id) AS taggings_count"
   )
-  .group_by("repositories.id")
-  .order_by("dependents_count", :desc)
+  .group_by("posts.id")
+  .order_by("taggings_count", :desc)
 ```
 
 Use `clear_distinct` deliberately. If the join can produce duplicate target
