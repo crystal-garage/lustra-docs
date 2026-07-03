@@ -2,53 +2,52 @@
 
 `has_one` is used when another table stores a foreign key pointing to the current model, but only zero or one related record is expected.
 
-This example extends the same `User` model used in the querying guide with a
-one-to-one `Profile` model:
+For example, each supplier can have one account:
 
 ```crystal
-class User
+class Supplier
   include Lustra::Model
 
   primary_key
-  column email : String
-  column active : Bool = true
+  column name : String
 
-  has_one profile : Profile
+  has_one account : Account
 end
 
-class Profile
+class Account
   include Lustra::Model
 
   primary_key
-  column display_name : String
+  column account_number : String
 
-  belongs_to user : User
+  belongs_to supplier : Supplier
 end
 ```
 
-`User#profile` returns `Profile?`:
+The foreign key lives on the `accounts` table. `Supplier#account` returns
+`Account?`:
 
 ```crystal
-user = User.query.first!
+supplier = Supplier.query.first!
 
-if profile = user.profile
-  puts profile.display_name
+if account = supplier.account
+  puts account.account_number
 end
 ```
 
 Use the bang variant when the related record must exist:
 
 ```crystal
-profile = user.profile!
+account = supplier.account!
 ```
 
 ## Eager Loading
 
-Collections get a generated `with_profile` helper:
+Collections get a generated `with_account` helper:
 
 ```crystal
-User.query.with_profile.each do |user|
-  puts user.profile.try(&.display_name)
+Supplier.query.with_account.each do |supplier|
+  puts supplier.account.try(&.account_number)
 end
 ```
 

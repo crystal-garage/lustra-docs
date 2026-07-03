@@ -5,64 +5,67 @@
 Example schema:
 
 ```sql
-CREATE TABLE posts (
+CREATE TABLE books (
   id bigserial PRIMARY KEY,
   title text NOT NULL
 );
 
-CREATE TABLE tags (
+CREATE TABLE orders (
   id bigserial PRIMARY KEY,
-  name text NOT NULL
+  date_submitted timestamp NOT NULL,
+  status text NOT NULL
 );
 
-CREATE TABLE post_tags (
-  post_id bigint NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-  tag_id bigint NOT NULL REFERENCES tags(id) ON DELETE CASCADE
+CREATE TABLE book_orders (
+  id bigserial PRIMARY KEY,
+  book_id bigint NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+  order_id bigint NOT NULL REFERENCES orders(id) ON DELETE CASCADE
 );
 ```
 
 Define a join model for the join table:
 
 ```crystal
-class PostTag
+class BookOrder
   include Lustra::Model
 
   primary_key
 
-  belongs_to post : Post
-  belongs_to tag : Tag
+  belongs_to book : Book
+  belongs_to order : Order
 end
 ```
 
 Then connect the main models through it:
 
 ```crystal
-class Post
+class Book
   include Lustra::Model
 
   primary_key
   column title : String
 
-  has_many tags : Tag, through: PostTag
+  has_many orders : Order, through: BookOrder
 end
 
-class Tag
+class Order
   include Lustra::Model
 
   primary_key
-  column name : String
+  column date_submitted : Time
+  column status : String
 
-  has_many posts : Post, through: PostTag
+  has_many books : Book, through: BookOrder
 end
 ```
 
-Now `post.tags` returns a `Tag::Collection`:
+Now `book.orders` returns an `Order::Collection`:
 
 ```crystal
-post = Post.query.first!
+book = Book.query.first!
 
-post.tags.each do |tag|
-  puts tag.name
+book.orders.each do |order|
+  puts order.status
 end
 ```
 
@@ -71,22 +74,23 @@ end
 Append creates the target record if needed and inserts the join row when it does not already exist:
 
 ```crystal
-post = Post.query.first!
-tag = Tag.query.find_or_create({name: "Technology"}) { }
+book = Book.query.first!
+order = Order.create!(status: "paid", date_submitted: Time.local)
 
-post.tags << tag
+book.orders << order
 ```
 
 Unlink deletes the join row:
 
 ```crystal
-post = Post.query.first!
-tag = post.tags.where(name: "Technology").first!
+book = Book.query.first!
+order = book.orders.where(status: "paid").first!
 
-post.tags.unlink(tag)
+book.orders.unlink(order)
 ```
 
-Call `unlink` on the relation collection (`post.tags`), not on a plain `Tag.query`, so Lustra knows which parent and through table to use.
+Call `unlink` on the relation collection (`book.orders`), not on a plain
+`Order.query`, so Lustra knows which parent and through table to use.
 
 ## Autosave
 
@@ -97,20 +101,20 @@ Use `autosave: true` when records built through the association should be saved
 with the parent and linked through the join table.
 
 ```crystal
-class Post
+class Book
   include Lustra::Model
 
   primary_key
   column title : String
 
-  has_many tags : Tag, through: PostTag, autosave: true
+  has_many orders : Order, through: BookOrder, autosave: true
 end
 
-post = Post.new({title: "Lustra guide"})
-post.tags.build({name: "orm"})
-post.save!
+book = Book.new({title: "Lustra guide"})
+book.orders.build({status: "draft", date_submitted: Time.local})
+book.save!
 
-post.tags.count # => 1
+book.orders.count # => 1
 ```
 
 Autosave applies to records built through the association collection. Appending
@@ -124,8 +128,8 @@ record more than once when the join table can match multiple rows.
 For normal association reads, keep the default:
 
 ```crystal
-post.tags.each do |tag|
-  puts tag.name
+book.orders.each do |order|
+  puts order.status
 end
 ```
 
@@ -133,15 +137,15 @@ For advanced queries, you may need to remove that `DISTINCT` clause before
 adding custom select fields, grouping, or ordering.
 
 ```crystal
-posts = tag
-  .posts
+orders = book
+  .orders
   .clear_distinct
   .select(
-    "posts.*",
-    "COUNT(post_tags.id) AS taggings_count"
+    "orders.*",
+    "COUNT(book_orders.id) AS books_count"
   )
-  .group_by("posts.id")
-  .order_by("taggings_count", :desc)
+  .group_by("orders.id")
+  .order_by("books_count", :desc)
 ```
 
 Use `clear_distinct` deliberately. If the join can produce duplicate target
@@ -153,9 +157,9 @@ handles them with grouping or another condition.
 `has_many through` also generates a `with_*` helper:
 
 ```crystal
-Post.query.with_tags.each do |post|
-  post.tags.each do |tag|
-    puts tag.name
+Book.query.with_orders.each do |book|
+  book.orders.each do |order|
+    puts order.status
   end
 end
 ```

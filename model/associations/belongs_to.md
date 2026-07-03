@@ -5,59 +5,58 @@
 Example schema:
 
 ```sql
-CREATE TABLE users (
+CREATE TABLE authors (
   id bigserial PRIMARY KEY,
-  email text NOT NULL,
-  active boolean NOT NULL DEFAULT TRUE
+  name text NOT NULL
 );
 
-CREATE TABLE posts (
+CREATE TABLE books (
   id bigserial PRIMARY KEY,
   title text NOT NULL,
-  published boolean NOT NULL DEFAULT FALSE,
-  user_id bigint NOT NULL REFERENCES users(id)
+  published_at timestamp,
+  author_id bigint NOT NULL REFERENCES authors(id)
 );
 ```
 
-`posts.user_id` points to `users.id`, so `Post` belongs to `User`:
+`books.author_id` points to `authors.id`, so `Book` belongs to `Author`:
 
 ```crystal
-class User
+class Author
   include Lustra::Model
 
   primary_key
-  column email : String
-  column active : Bool = true
+  column name : String
 
-  has_many posts : Post
+  has_many books : Book
 end
 
-class Post
+class Book
   include Lustra::Model
 
   primary_key
   column title : String
-  column published : Bool = false
+  column published_at : Time?
 
-  belongs_to user : User
+  belongs_to author : Author
 end
 ```
 
-The `belongs_to` macro declares the `user_id` column for you. You do not need to declare it separately unless you want a custom setup.
+The `belongs_to` macro declares the `author_id` column for you. You do not need
+to declare it separately unless you want a custom setup.
 
 Use the association like this:
 
 ```crystal
-post = Post.query.first!
-puts post.user.email
+book = Book.query.first!
+puts book.author.name
 ```
 
 Assigning a persisted parent updates the foreign key:
 
 ```crystal
-user = User.query.find_by! { email == "ada@example.com" }
-post.user = user
-post.save!
+author = Author.query.find_by! { name == "Ada Lovelace" }
+book.author = author
+book.save!
 ```
 
 ## Counter Cache
@@ -65,66 +64,66 @@ post.save!
 Use `counter_cache` when the parent model stores the number of child records.
 
 ```crystal
-class User
+class Author
   include Lustra::Model
 
   primary_key
-  column email : String
-  column posts_count : Int64 = 0
+  column name : String
+  column books_count : Int64 = 0
 
-  has_many posts : Post
+  has_many books : Book
 end
 
-class Post
+class Book
   include Lustra::Model
 
   primary_key
   column title : String
 
-  belongs_to user : User, counter_cache: true
+  belongs_to author : Author, counter_cache: true
 end
 ```
 
 With `counter_cache: true`, Lustra uses the conventional counter column name:
-the child table name plus `_count`. For `Post.table == "posts"`, the parent
-column is `posts_count`.
+the child table name plus `_count`. For `Book.table == "books"`, the parent
+column is `books_count`.
 
 ```crystal
-user = User.create!(email: "ada@example.com")
-Post.create!(title: "First", user: user)
+author = Author.create!(name: "Ada Lovelace")
+Book.create!(title: "First", author: author)
 
-user.reload
-user.posts_count # => 1
+author.reload
+author.books_count # => 1
 ```
 
 The counter is incremented after child creation and decremented after child
 destroy:
 
 ```crystal
-post = Post.create!(title: "Second", user: user)
-post.destroy
+book = Book.create!(title: "Second", author: author)
+book.destroy
 ```
 
 Use a custom counter column by passing the column name:
 
 ```crystal
-class Post
+class Book
   include Lustra::Model
 
-  belongs_to user : User, counter_cache: :published_posts_count
+  belongs_to author : Author, counter_cache: :published_books_count
 end
 ```
 
 If counters become stale, reset them from the parent model class:
 
 ```crystal
-User.reset_counters(user.id, Post)
+Author.reset_counters(author.id, Book)
 ```
 
 Or from a parent record:
 
 ```crystal
-user.reset_counters(Post)
+author.reset_counters(Book)
 ```
 
 Counter caches rely on model lifecycle callbacks. Direct SQL, `delete`,
@@ -137,15 +136,15 @@ accurate.
 Use a nilable relation type when the foreign key can be null:
 
 ```crystal
-class Post
+class Book
   include Lustra::Model
 
   primary_key
-  belongs_to user : User?, foreign_key_type: Int64?
+  belongs_to author : Author?, foreign_key_type: Int64?
 end
 ```
 
-This generates `user : User?` and `user! : User`.
+This generates `author : Author?` and `author! : Author`.
 
 ## Options
 
