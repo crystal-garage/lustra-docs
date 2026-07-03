@@ -8,6 +8,7 @@
 
 ## Model
 
+* [Model Basics](model/model-basics.md)
 * [Defining your model](model/column-types/README.md)
   * [Describing your columns](model/column-types/model-definition.md)
   * [Primary Keys](model/column-types/primary-keys.md)
