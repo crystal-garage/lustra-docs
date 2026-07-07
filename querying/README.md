@@ -1,7 +1,6 @@
 # Querying with Lustra
 
-This guide covers the main ways to retrieve data from PostgreSQL using Lustra
-model collections.
+This guide covers the main ways to retrieve data from PostgreSQL using Lustra model collections.
 
 After reading this guide, you will know:
 
@@ -17,7 +16,7 @@ After reading this guide, you will know:
 
 Examples in this guide use a small model set:
 
-![Lustra ORM querying example schema](../assets/lustra-querying-example.svg)
+![Lustra ORM querying example schema](../.gitbook/assets/lustra-querying-example.svg)
 
 ```crystal
 class User
@@ -66,9 +65,7 @@ end
 
 ## 1. What Is a Collection?
 
-`Model.query` returns a collection. A collection represents a SQL `SELECT`
-query and is executed only when you use a terminal helper such as `each`,
-`to_a`, `first`, `count`, `exists?`, `any?`, or `empty?`.
+`Model.query` returns a collection. A collection represents a SQL `SELECT` query and is executed only when you use a terminal helper such as `each`, `to_a`, `first`, `count`, `exists?`, `any?`, or `empty?`.
 
 ```crystal
 posts = Post.query.where(published: true)
@@ -78,16 +75,14 @@ posts.each do |post|
 end
 ```
 
-Collections are mutable. Query-refinement methods such as `where`, `select`,
-`join`, `order_by`, `limit`, and `group_by` change the collection they are
-called on. Use `dup` when you need to reuse a base query safely.
+Collections are mutable. Query-refinement methods such as `where`, `select`, `join`, `order_by`, `limit`, and `group_by` change the collection they are called on. Use `dup` when you need to reuse a base query safely.
 
 ```crystal
 base = Post.query.where(published: true)
 recent = base.dup.order_by(created_at: :desc).limit(10)
 ```
 
-See [The Collection Object](the-collection-object/README.md).
+See [The Collection Object](the-collection-object/).
 
 ## 2. Retrieving Records
 
@@ -156,8 +151,7 @@ Post.query.order_by("LOWER(title)", :asc)
 Post.query.order_by(created_at: {:desc, :nulls_last})
 ```
 
-Use `reverse_order_by` to flip current ordering and `in_order_of` to order by
-an explicit list of values:
+Use `reverse_order_by` to flip current ordering and `in_order_of` to order by an explicit list of values:
 
 ```crystal
 Post.query.order_by(created_at: :desc).reverse_order_by
@@ -168,15 +162,13 @@ See [Ordering, Grouping, and Having](the-collection-object/filter-the-query-1/or
 
 ## 5. Selecting Fields
 
-By default, collections select the model table columns. Use `select` to choose
-specific fields or add computed fields:
+By default, collections select the model table columns. Use `select` to choose specific fields or add computed fields:
 
 ```crystal
 Post.query.select("posts.*", "LOWER(title) AS normalized_title")
 ```
 
-When selecting custom fields and building models, pass `fetch_columns: true` to
-keep those fields in `attributes`:
+When selecting custom fields and building models, pass `fetch_columns: true` to keep those fields in `attributes`:
 
 ```crystal
 Post.query
@@ -254,13 +246,11 @@ Tag.query.where.missing(:post_tags)
 Tag.query.where.associated(:post_tags)
 ```
 
-When a presence filter joins a multi-row association, use `group_by` or
-`distinct` if you need one base row per model.
+When a presence filter joins a multi-row association, use `group_by` or `distinct` if you need one base row per model.
 
 ## 10. Association Counts
 
-Use `with_count` to select related-record counts without loading the related
-records:
+Use `with_count` to select related-record counts without loading the related records:
 
 ```crystal
 User.query.with_count(:posts)
@@ -275,9 +265,7 @@ User.query.with_count(:posts).each(fetch_columns: true) do |user|
 end
 ```
 
-`with_count` uses a correlated count subquery. When called on a joined query
-without an existing `GROUP BY`, Lustra groups by the base model primary key to
-avoid duplicate base rows.
+`with_count` uses a correlated count subquery. When called on a joined query without an existing `GROUP BY`, Lustra groups by the base model primary key to avoid duplicate base rows.
 
 ## 11. Eager Loading Associations
 
@@ -295,8 +283,7 @@ Nested loading is available through a block:
 User.query.with_posts(&.with_tags)
 ```
 
-Eager loading runs additional queries and attaches cached association records.
-Use it when you will read the association for many records.
+Eager loading runs additional queries and attaches cached association records. Use it when you will read the association for many records.
 
 See [Eager Loading](the-collection-object/n+1-query-avoidance.md).
 
@@ -314,15 +301,13 @@ end
 Post.query.published.order_by(created_at: :desc)
 ```
 
-Collections can be chained because query-refinement methods return the
-collection.
+Collections can be chained because query-refinement methods return the collection.
 
 See [Scopes](the-collection-object/scopes.md).
 
 ## 13. Find or Build Records
 
-Use `find_or_build`, `find_or_create`, and related helpers when synchronizing
-external data:
+Use `find_or_build`, `find_or_create`, and related helpers when synchronizing external data:
 
 ```crystal
 user = User.query.find_or_build(provider: "github", provider_id: 123)
@@ -330,8 +315,7 @@ user.email = "user@example.com"
 user.save!
 ```
 
-Use these helpers when the lookup attributes are also the natural initialization
-attributes for the model.
+Use these helpers when the lookup attributes are also the natural initialization attributes for the model.
 
 ## 14. Pluck and Raw Fetching
 
@@ -360,8 +344,7 @@ Use `exists?` when you want a direct database existence check:
 User.query.where(active: true).exists?
 ```
 
-Use `any?` and `empty?` when working with collections. They can use a cached
-result when one is already attached.
+Use `any?` and `empty?` when working with collections. They can use a cached result when one is already attached.
 
 ```crystal
 users = User.query.where(active: true)
@@ -386,8 +369,7 @@ See [Aggregation](the-collection-object/filter-the-query-1/aggregation.md).
 
 ## 17. Low-Level SQL
 
-Model collections include many select-builder features, but Lustra also exposes
-the lower-level SQL builder:
+Model collections include many select-builder features, but Lustra also exposes the lower-level SQL builder:
 
 ```crystal
 Lustra::SQL
@@ -399,10 +381,9 @@ Lustra::SQL
   end
 ```
 
-Use it for reporting queries, CTE-heavy queries, and PostgreSQL-specific SQL
-that does not naturally map to model instances.
+Use it for reporting queries, CTE-heavy queries, and PostgreSQL-specific SQL that does not naturally map to model instances.
 
-See [Writing Low-Level SQL](low-level-sql/README.md).
+See [Writing Low-Level SQL](low-level-sql/).
 
 ## 18. EXPLAIN
 
@@ -412,22 +393,19 @@ Use `explain` to inspect the query plan:
 Post.query.where(published: true).explain
 ```
 
-Use `explain_analyze` when you want PostgreSQL to run the query and return
-execution details:
+Use `explain_analyze` when you want PostgreSQL to run the query and return execution details:
 
 ```crystal
 Post.query.where(published: true).explain_analyze
 ```
 
-`EXPLAIN ANALYZE` executes the query, so use it carefully for writes or
-expensive statements.
+`EXPLAIN ANALYZE` executes the query, so use it carefully for writes or expensive statements.
 
-See [Writing Low-Level SQL](low-level-sql/README.md#query-plans).
+See [Writing Low-Level SQL](low-level-sql/#query-plans).
 
 ## 19. Query Mutability
 
-Lustra collections are mutable. This is useful for chaining, but important when
-reusing query objects:
+Lustra collections are mutable. This is useful for chaining, but important when reusing query objects:
 
 ```crystal
 base = User.query.where(active: true)
@@ -444,6 +422,4 @@ admins = base.dup.where(role: "admin")
 editors = base.dup.where(role: "editor")
 ```
 
-Terminal helpers such as `exists?`, `any?`, `empty?`, `pluck`, and `pluck_col`
-are designed to avoid mutating the collection query while checking or extracting
-values.
+Terminal helpers such as `exists?`, `any?`, `empty?`, `pluck`, and `pluck_col` are designed to avoid mutating the collection query while checking or extracting values.
