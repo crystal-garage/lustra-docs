@@ -140,6 +140,10 @@ Some methods intentionally update the database directly. They do not run validat
 | Method | Behavior |
 | :--- | :--- |
 | `delete` | Deletes one persisted model without callbacks. |
+| `Model.insert` | Inserts one row directly without building a model. |
+| `Model.insert_all` | Inserts many rows directly in one SQL statement. |
+| `Model.upsert` | Inserts or updates one row through PostgreSQL `ON CONFLICT`. |
+| `Model.upsert_all` | Inserts or updates many rows through PostgreSQL `ON CONFLICT`. |
 | `update_column` | Updates one column directly. |
 | `update_columns` | Updates multiple columns directly. |
 | `increment!` / `decrement!` | Atomically updates a numeric column in the database. |
