@@ -69,6 +69,10 @@ users.to_sql  # active users
 admins.to_sql # active admins
 ```
 
+Create duplicated branches before attaching generated `with_*` eager-loading
+helpers. Eager-loading work belongs to the collection on which `with_*` was
+called, so duplicating that collection afterward is not a safe way to branch it.
+
 ## Terminal Helpers
 
 Terminal helpers execute the query or derive a result from it:
@@ -84,11 +88,14 @@ Terminal helpers execute the query or derive a result from it:
 | `any?` / `empty?` | Checks whether at least one row exists. |
 | `count` | Runs a count query unless the collection already has a cached result. |
 
-Terminal helpers are the boundary where SQL is sent to PostgreSQL. Some helpers, such as `any?` and `empty?`, use a copied query internally so they do not refine the collection with `SELECT 1` or `LIMIT 1`.
+Terminal helpers are the boundary where SQL is sent to PostgreSQL. Helpers that
+temporarily add a projection, filter, ordering, limit, or offset restore the
+collection query before returning. A collection can therefore be reused after
+`any?`, `empty?`, `pluck`, `first`, `last`, `find`, `find_by`, or array-style
+access without retaining those temporary changes.
 
 ## Cached Results
 
 Some association eager-loading paths attach cached records to a collection. When a cached result is present, terminal helpers such as `each`, `any?`, `empty?`, and `count` can use that cached result instead of issuing a new SQL query.
 
 Refining a collection clears cached results because the SQL result set has changed.
-

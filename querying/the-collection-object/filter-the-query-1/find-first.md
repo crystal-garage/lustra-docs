@@ -20,6 +20,9 @@ posts = Post.query.find([1, 2, 3])  # Array(Post)
 posts = Post.query.find!([1, 2, 3]) # raises if any id is missing
 ```
 
+The primary-key condition used by `find` is temporary. Calling it does not add
+that condition to a collection that is reused later.
+
 ## `find_by` and `find_by!`
 
 `find_by` applies a condition and returns the first matching record:
@@ -42,6 +45,10 @@ User.find_by(email: "user@example.com")
 User.find_by!(email: "user@example.com")
 ```
 
+The lookup condition and `LIMIT 1` used by `find_by` are temporary. The
+collection keeps the filters, ordering, limit, and offset it had before the
+lookup.
+
 ## `first` and `first!`
 
 `first` returns the first matching record or `nil`:
@@ -57,6 +64,7 @@ post = Post.query.order_by(created_at: :desc).first!
 ```
 
 When no explicit order is set, Lustra applies primary-key ordering before fetching the first row.
+The temporary ordering and limit are restored before `first` returns.
 
 ## `last` and `last!`
 
@@ -73,6 +81,7 @@ post = Post.query.order_by(created_at: :desc).last!
 ```
 
 `last` works by reversing the current order and fetching one row. If no order is set, Lustra uses primary-key ordering.
+The temporary ordering and limit are restored before `last` returns.
 
 ## `limit` and `offset`
 
@@ -110,11 +119,13 @@ post = Post.query.order_by(id: :asc)[10]? # Post?
 posts = Post.query.order_by(id: :asc)[10..20] # Array(Post)
 ```
 
-Internally, array-style access applies `offset` and `limit` to the collection. If you need to keep the original collection unchanged, call it on a duplicate:
+Array-style access applies `offset` and `limit` temporarily, then restores the
+collection. The same query can be reused afterward:
 
 ```crystal
 posts = Post.query.order_by(id: :asc)
-slice = posts.dup[10..20]
+slice = posts[10..20]
+all_posts = posts.to_a
 ```
 
 For general array indexing after loading records, use `to_a`:

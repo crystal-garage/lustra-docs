@@ -83,6 +83,10 @@ Use `fetch_first` or `fetch_first!` for one row.
 row = Lustra::SQL.select.from(:users).where(id: 1).fetch_first
 ```
 
+`fetch_first` and `fetch_first!` apply `LIMIT 1` only while fetching. If the
+builder already has another limit, that limit is restored before the helper
+returns.
+
 Use `scalar` when the query returns one row and one column.
 
 ```crystal

@@ -75,12 +75,16 @@ posts.each do |post|
 end
 ```
 
-Collections are mutable. Query-refinement methods such as `where`, `select`, `join`, `order_by`, `limit`, and `group_by` change the collection they are called on. Use `dup` when you need to reuse a base query safely.
+Collections are mutable. Query-refinement methods such as `where`, `select`, `join`, `order_by`, `limit`, and `group_by` change the collection they are called on. Use `dup` when you need to branch a base query before attaching eager-loading helpers.
 
 ```crystal
 base = Post.query.where(published: true)
 recent = base.dup.order_by(created_at: :desc).limit(10)
 ```
+
+Generated `with_*` eager-loading helpers attach work to a specific collection.
+Create independent query branches before calling them; do not duplicate a
+collection after eager loading has been attached.
 
 See [The Collection Object](the-collection-object/).
 
@@ -422,4 +426,7 @@ admins = base.dup.where(role: "admin")
 editors = base.dup.where(role: "editor")
 ```
 
-Terminal helpers such as `exists?`, `any?`, `empty?`, `pluck`, and `pluck_col` are designed to avoid mutating the collection query while checking or extracting values.
+Terminal helpers that check existence, extract values, fetch individual records,
+or fetch ranges restore any temporary query changes before returning. This
+includes `exists?`, `any?`, `empty?`, `pluck`, `first`, `last`, `find`,
+`find_by`, and array-style access.
