@@ -140,9 +140,33 @@ Limit which columns are updated with `update_only`.
 Book.upsert_all(rows, unique_by: :isbn, update_only: [:title, :author])
 ```
 
-`upsert` returns a model instance, or `nil` when `on_duplicate: :skip` skips the row. `upsert_all` returns model instances for rows returned by PostgreSQL.
+For PostgreSQL expressions beyond replacing columns with `excluded` values, pass a custom `SET` clause with `Lustra::SQL.unsafe`.
 
-Upsert methods bypass validations and callbacks. They use PostgreSQL `ON CONFLICT`, so they need a unique constraint or unique index for the conflict target. They always use `RETURNING *` and return model instances built from the rows PostgreSQL returns.
+```crystal
+Book.upsert(
+  {
+    isbn: "9780307463746",
+    inventory_count: 3,
+  },
+  unique_by: :isbn,
+  on_duplicate: Lustra::SQL.unsafe(
+    %("inventory_count" = "books"."inventory_count" + excluded."inventory_count")
+  )
+)
+```
+
+A custom conflict update cannot be combined with `update_only`. Because Lustra inserts the unsafe fragment directly into the SQL statement, never build it from untrusted input.
+
+By default, `upsert` returns a model instance and `upsert_all` returns model instances for rows returned by PostgreSQL. Set `returning: false` to skip `RETURNING *` and model construction.
+
+```crystal
+Book.upsert(row, unique_by: :isbn, returning: false)       # nil
+Book.upsert_all(rows, unique_by: :isbn, returning: false) # []
+```
+
+With the default `returning: true`, `upsert` can also return `nil` when `on_duplicate: :skip` skips the row.
+
+Upsert methods bypass validations and callbacks. They use PostgreSQL `ON CONFLICT`, so they need a unique constraint or unique index for the conflict target.
 
 If a single `upsert_all` batch contains two rows that conflict with the same existing row, PostgreSQL cannot update that target row twice in one statement. Deduplicate incoming data before calling `upsert_all` when duplicates are possible inside the same batch.
 
@@ -153,8 +177,8 @@ If a single `upsert_all` batch contains two rows that conflict with the same exi
 | `import` | You already have new model instances and need model lifecycle behavior. | Runs validations and save/create callbacks. | Persisted model instances. |
 | `insert` | You need one direct insert. | Skipped. | Raw result hash or `nil`. |
 | `insert_all` | You need one SQL statement for many direct inserts. | Skipped. | Raw result hashes. |
-| `upsert` | You need one insert-or-update by a unique key. | Skipped. | Model instance or `nil`. |
-| `upsert_all` | You need many insert-or-update rows in one SQL statement. | Skipped. | Model instances returned by PostgreSQL. |
+| `upsert` | You need one insert-or-update by a unique key. | Skipped. | Model instance, or `nil` when skipped or `returning: false`. |
+| `upsert_all` | You need many insert-or-update rows in one SQL statement. | Skipped. | Model instances, or an empty array with `returning: false`. |
 
 ## Low-Level Bulk Insert
 
