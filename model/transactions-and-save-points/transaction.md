@@ -19,7 +19,7 @@ end
 
 ## Isolation Levels
 
-`transaction` accepts an isolation level. The default is `Serializable`.
+`transaction` accepts an isolation level. The default is explicitly `ReadCommitted`, independently of the PostgreSQL session default. `RepeatableRead` and `Serializable` remain available when requested.
 
 ```crystal
 Lustra::SQL.transaction(level: Lustra::SQL::Transaction::Level::ReadCommitted) do

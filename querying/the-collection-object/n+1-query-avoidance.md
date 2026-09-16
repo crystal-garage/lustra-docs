@@ -66,17 +66,15 @@ end
 
 The cache belongs to the collection/model instances involved in that fetch. It is not a global cache.
 
-Eager-loading work also belongs to the collection on which `with_*` was called.
-If you need independent query branches, duplicate the base query first and add
-eager loading to each branch:
+Use `dup` for independent query branches. Eager-loading helpers attached to the base query are preserved, and each copy loads associations using its own filters and cache:
 
 ```crystal
-base = User.query.where(active: true)
-admins = base.dup.where(role: "admin").with_posts
-editors = base.dup.where(role: "editor").with_posts
+base = User.query.where(active: true).with_posts
+admins = base.dup.where(role: "admin")
+editors = base.dup.where(role: "editor")
 ```
 
-Do not call `dup` after `with_*` has already attached eager-loading work.
+Adding eager-loading helpers to a copy does not modify the original query's hook list.
 
 ## Cost
 

@@ -40,7 +40,7 @@ Use an expression block for richer conditions:
 ```crystal
 User.query.where { (first_name == "Richard") | (last_name == "Richard") }
 User.query.where { created_at.in?(1.week.ago..Time.utc) }
-User.query.where { posts_count.between(10, 20) }
+User.query.where { posts_count.between?(10, 20) }
 User.query.where { email =~ /@example\.com$/i }
 ```
 
@@ -56,7 +56,7 @@ Common operators:
 | `in?(array)` | `IN (...)` |
 | `in?(range)` | range comparison |
 | `in?(subquery)` | `IN (SELECT ...)` |
-| `between(a, b)` | `BETWEEN a AND b` |
+| `between?(a, b)` | `BETWEEN a AND b` |
 
 Because Crystal does not let libraries redefine `&&` and `||`, use `&` and `|` for SQL `AND` and `OR`.
 

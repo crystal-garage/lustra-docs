@@ -28,7 +28,7 @@ average_id = User.query.avg("id", Float64)
 total_ids = User.query.sum("id")
 ```
 
-`min`, `max`, and `avg` require the expected return type. `sum` currently returns `Float64`.
+`min`, `max`, and `avg` require the expected return type. `sum(field)` returns `Float64`; `sum(field, Type)` returns the requested type.
 
 `sum` does not sanitize the `field` input, so pass trusted SQL fragments only.
 
@@ -37,7 +37,14 @@ total_post_ids = Post.query.where(published: true).sum("id")
 # => Float64
 ```
 
-For typed aggregate output, use `agg`.
+Use the typed `sum` overload when the result should stay in a specific numeric type:
+
+```crystal
+total_post_ids = Post.query.where(published: true).sum("id", Int64)
+# => Int64
+```
+
+The type must match PostgreSQL's aggregate result type. The typed overload returns zero when there are no matching values.
 
 ## Custom Aggregates
 

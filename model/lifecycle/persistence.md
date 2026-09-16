@@ -14,9 +14,9 @@ else
 end
 ```
 
-`save` returns `true` when the record was persisted and `false` when validations fail.
+`save` returns `true` when the record was persisted. It returns `false` when validations fail or conflict handling skips an insert.
 
-`save!` raises `Lustra::Model::InvalidError` when validations fail and returns the model on success:
+`save!` raises `Lustra::Model::InvalidError` when validations fail or conflict handling skips an insert. It returns the model on success:
 
 ```crystal
 user = User.new({email: "user@example.com"})
@@ -24,6 +24,23 @@ user.save!
 ```
 
 When the model is new, Lustra runs an `INSERT`. When the model is already persisted and has changed columns, Lustra runs an `UPDATE`.
+
+## Conflict-Skipped Inserts
+
+An insert skipped by `ON CONFLICT DO NOTHING` leaves the model unpersisted. Its attributes and existing dirty state are preserved, and successful-create and successful-save callbacks do not run.
+
+```crystal
+# Assumes a unique email constraint and an existing row with this address.
+user = User.new({email: "existing@example.com"})
+saved = user.save(->(query : Lustra::SQL::InsertQuery) do
+  query.on_conflict("(email)").do_nothing
+end)
+
+saved           # => false
+user.persisted? # => false
+```
+
+`save_with_associations` also returns `false` when the main model insert is skipped. `save!` raises `Lustra::Model::InvalidError` for this outcome.
 
 ## Update
 

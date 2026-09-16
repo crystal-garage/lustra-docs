@@ -69,9 +69,7 @@ users.to_sql  # active users
 admins.to_sql # active admins
 ```
 
-Create duplicated branches before attaching generated `with_*` eager-loading
-helpers. Eager-loading work belongs to the collection on which `with_*` was
-called, so duplicating that collection afterward is not a safe way to branch it.
+Queries can be duplicated before or after attaching generated `with_*` eager-loading helpers. Each copy has an independent hook list and association cache; eager loading uses that copy's filters.
 
 ## Terminal Helpers
 
