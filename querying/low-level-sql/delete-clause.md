@@ -48,3 +48,18 @@ User.query
 ```
 
 `to_delete` is available only when the source query has exactly one table in `FROM` and does not use a subquery as its table.
+
+## Returning Values
+
+Use `execute_returning` to get deleted columns as typed tuples:
+
+```crystal
+rows = Lustra::SQL.delete(:users)
+  .where(id: 10)
+  .execute_returning({id: Int64, email: String})
+# => Array(Tuple(Int64, String))
+```
+
+Types must match the PostgreSQL result columns. Tuple values follow the declared column order; returned row order is not guaranteed. No matching rows produces an empty array.
+
+For raw hashes, use `.returning("id, email").fetch` with a block instead.

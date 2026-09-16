@@ -30,6 +30,20 @@ User.query.where(active: false).update_all(fields)
 
 `update_all` bypasses validations, callbacks, change tracking, and automatic timestamp updates. Use it only when direct SQL behavior is what you want.
 
+## Returning Updated Values
+
+Pass update fields as a positional named tuple or string-keyed hash, and use a named tuple of column names and types for `returning`:
+
+```crystal
+rows = User.query.where(active: false).update_all(
+  {active: true},
+  returning: {id: Int64, email: String}
+)
+# => Array(Tuple(Int64, String))
+```
+
+The types must match the PostgreSQL result columns. Tuple values follow the declared column order; PostgreSQL does not guarantee row order. No matching rows produces an empty array. This still bypasses model instantiation, validations, and callbacks.
+
 ## Custom Update Queries
 
 Use `to_update` when you need lower-level update builder features.
@@ -52,7 +66,14 @@ Use `delete_all` to delete every row matched by a collection without loading mod
 User.query.where(active: false).delete_all
 ```
 
-`delete_all` bypasses destroy callbacks.
+`delete_all` returns an `Int64` affected-row count and bypasses destroy callbacks. It can also return deleted values:
+
+```crystal
+rows = User.query.where(active: false).delete_all(
+  returning: {id: Int64, email: String}
+)
+# => Array(Tuple(Int64, String))
+```
 
 Use `destroy_all` when callbacks must run.
 

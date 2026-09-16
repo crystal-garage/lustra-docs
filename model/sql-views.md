@@ -62,7 +62,16 @@ Lustra::View.register :active_user_reports do |view|
 end
 ```
 
-Registered views are dropped before pending migrations run and recreated after migrations finish. This is useful when a view depends on tables or other views that migrations may change.
+Registration stores the definition in the running program; it does not execute SQL. After initializing the connection, creating the source tables, and loading the definitions, create the views:
+
+```crystal
+Lustra::View.apply(:create)
+
+rows = Lustra::SQL.select.from("public.active_user_reports").to_a
+reports = ActiveUserReport.query.to_a
+```
+
+`Lustra::Migration::Manager.instance.apply_all` drops registered views, applies pending migrations, and recreates the views from their loaded definitions. This also happens when no migrations are pending. Individual `up`, `down`, and `apply_to` calls do not perform this view lifecycle. Load view definitions in the migration entry point before calling `apply_all`.
 
 ## View Dependencies
 
@@ -89,7 +98,7 @@ Lustra::View.register :active_user_daily_post_counts do |view|
 end
 ```
 
-Lustra uses these dependencies to drop and recreate registered views in an order that avoids broken dependent views.
+Dependencies are created first and dropped last, regardless of registration order. Cyclic dependencies raise `ArgumentError`.
 
 ## Schema and Connection
 
@@ -114,5 +123,27 @@ Lustra::View.register :expensive_report do |view|
 end
 ```
 
-Materialized views often need explicit refresh and operational handling. For complex materialized views, prefer managing them with explicit migration SQL.
+Create the materialized view once after registering it, then query its stored results:
+
+```crystal
+Lustra::View.apply(:create)
+rows = Lustra::SQL.select.from("public.expensive_report").to_a
+```
+
+Lustra does not refresh materialized views automatically. Refresh them with SQL when their source data changes:
+
+```crystal
+Lustra::SQL.execute("REFRESH MATERIALIZED VIEW public.expensive_report")
+```
+
+A refresh updates stored data; it does not change the view definition. After changing a definition, use the migration manager's drop-and-create lifecycle. Calling `apply(:create)` again does not replace an existing materialized view.
+
+For a view registered on a named connection, use that connection for both reads and refreshes:
+
+```crystal
+Lustra::SQL.select.from("reporting.expensive_report").use_connection("primary").to_a
+Lustra::SQL.execute("primary", "REFRESH MATERIALIZED VIEW reporting.expensive_report")
+```
+
+This last example assumes the view was registered with `view.schema :reporting` and `view.connection "primary"`, and that the schema already exists.
 

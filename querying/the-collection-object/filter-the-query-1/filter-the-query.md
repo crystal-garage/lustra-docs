@@ -57,6 +57,8 @@ Common operators:
 | `in?(range)` | range comparison |
 | `in?(subquery)` | `IN (SELECT ...)` |
 | `between?(a, b)` | `BETWEEN a AND b` |
+| `after?(value)` | `> value` |
+| `before?(value)` | `< value` |
 
 Because Crystal does not let libraries redefine `&&` and `||`, use `&` and `|` for SQL `AND` and `OR`.
 
@@ -66,6 +68,18 @@ Always parenthesize each side of `&` and `|`:
 User.query.where { (active == true) & (posts_count > 0) }
 User.query.where { (role == "admin") | (role == "owner") }
 ```
+
+## Before and After Predicates
+
+`after?` and `before?` are strict comparisons. They accept literal values or other SQL expressions:
+
+```crystal
+cutoff = Time.utc(2026, 1, 1)
+User.query.where { created_at.after?(cutoff) }
+User.query.where { created_at.before?(updated_at) }
+```
+
+These are equivalent to `>` and `<`; they do not include equality. Use `between?` for an inclusive range. The older `between` spelling is deprecated.
 
 ## Local Variables and Column Names
 

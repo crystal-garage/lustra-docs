@@ -93,6 +93,38 @@ RepositoryFork.query.find_or_create(
 Prefer `find_or_build` when the record needs more fields assigned before saving.
 Prefer `find_or_create` when the lookup fields are enough for a valid record.
 
+## Checking for Pending Persistence
+
+`modified?` returns `true` for a new record or a persisted record with changed attributes. `changed?` checks dirty attributes only; a new model can need an insert even when `changed?` is false.
+
+```crystal
+user = User.new({email: "user@example.com"})
+user.modified? # => true
+
+user.save!
+user.modified? # => false
+
+user.email = "new@example.com"
+user.modified? # => true
+```
+
+## Direct Updates and Dirty Tracking
+
+`update_column`, `update_columns`, `increment!`, and `decrement!` clear dirty state only for the attributes they write. Unrelated pending edits remain available for a later save.
+
+```crystal
+user = User.find!(1)
+user.email = "pending@example.com"
+user.update_column(:active, false)
+
+user.email_column.changed? # => true
+user.save! # persists the pending email change
+```
+
+`increment!` and `decrement!` use `UPDATE ... RETURNING`: they apply the change to the database value and update the local counter in one statement. They return the model, bypass validations and callbacks, and raise `Lustra::SQL::RecordNotFoundError` if the row no longer exists.
+
+The non-bang `increment` and `decrement` methods only change the current in-memory value; call `save!` to persist it.
+
 ## Reload
 
 `reload` fetches the current database row by primary key, replaces the model values, clears cached association data, and marks the model as persisted:

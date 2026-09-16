@@ -83,3 +83,29 @@ postgres://localhost/my_app?initial_pool_size=1&max_pool_size=10&checkout_timeou
 ```
 
 Size the pool for the number of concurrent fibers that may hold a database connection at the same time. Long transactions and streaming result sets keep connections checked out longer, so they need more care than short single queries.
+
+## Statement Cache
+
+Lustra defaults to `prepared_statements_cache=false` when opening a pool. Queries contain literal values, so different values produce different SQL strings. The crystal-db statement cache can otherwise retain a new statement object for every distinct query on a long-lived connection.
+
+This is a client-side cache setting. It does not disable PostgreSQL's query planner or change query results.
+
+An explicit URL setting takes precedence:
+
+```crystal
+Lustra::SQL.init("postgres://localhost/my_app?prepared_statements_cache=true")
+```
+
+Other URL options are preserved. The default applies to pools opened through Lustra, not to separate calls to `DB.open`.
+
+## Connection Failures
+
+Pool retries cover connection checkout only. Once caller code starts running, Lustra does not replay queries or transaction bodies after connection loss. This avoids repeating writes or application side effects.
+
+Nested calls keep using the connection checked out by the outer scope. They do not silently switch to another connection in the middle of a transaction. Cleanup releases the fiber's connection reference when that scope exits.
+
+## Replacing a Pool
+
+Calling `init` or `add_connection` again with the same name replaces an idle pool and closes the old pool. Replacement raises `Lustra::SQL::Error` while connections are checked out or being acquired, including from other fibers.
+
+If opening the replacement fails, the previous pool remains available. Reinitialize pools only when no work is using them. Lustra does not currently expose a public pool shutdown method.

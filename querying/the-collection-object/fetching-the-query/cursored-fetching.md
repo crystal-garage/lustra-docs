@@ -43,3 +43,23 @@ end
 ```
 
 Cursor fetching runs inside a transaction because PostgreSQL cursors are transaction-scoped.
+
+## Batch Sizes and Cleanup
+
+If the collection is already cached, `each_with_cursor` yields the cached models without opening a cursor.
+
+When opening a cursor, batch sizes must be positive. Zero or negative values raise `ArgumentError`; low-level `fetch_with_cursor` validates the size before query hooks or SQL run.
+
+Lustra explicitly closes the cursor after normal completion, an early exit, or a callback exception. This also applies when iteration reuses an outer transaction, so a finished cursor does not stay open until that transaction ends.
+
+```crystal
+Lustra::SQL.transaction do
+  User.query.order_by(:id).each_with_cursor(batch: 100) do |user|
+    puts user.email
+  end
+
+  # The cursor is closed, while the outer transaction remains open.
+end
+```
+
+Cleanup preserves the original iteration exception if the transaction is aborted or the connection is lost. Cursor iteration uses the model or query's selected connection.

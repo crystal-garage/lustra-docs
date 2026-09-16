@@ -18,6 +18,30 @@ create_table(:users) do |t|
 end
 ```
 
+## Assigning Crystal Values
+
+`set` with a hash accepts JSON-serializable Crystal hashes, arrays, and named tuples for `JSON::Any` columns. Lustra converts them to `JSON::Any`:
+
+```crystal
+user = User.new
+user.set({:notification_preferences => {"topics" => ["crystal", "postgresql"]}})
+user.notification_preferences["topics"][0].as_s # => "crystal"
+
+user.set({:notification_preferences => {email: {enabled: true}}})
+user.notification_preferences["email"]["enabled"].as_bool # => true
+
+user.set({:notification_preferences => ["email", "sms"]})
+user.notification_preferences[0].as_s # => "email"
+```
+
+Model creation and collection-based `build` and `create!` use the same conversion:
+
+```crystal
+User.query.build(notification_preferences: {email: {enabled: true}})
+```
+
+These assignments change the model in memory; saving persists the JSON value. Direct setters such as `user.notification_preferences = value` still require a `JSON::Any` value.
+
 ## JSONB Paths
 
 Use `jsonb(path)` in query expressions. Dot-separated paths are converted to PostgreSQL JSONB operators.

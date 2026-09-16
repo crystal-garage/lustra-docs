@@ -8,6 +8,14 @@ Lustra::SQL.insert_into(:users, {email: "admin@example.com", active: true}).exec
 Lustra::SQL.insert(:users, {email: "admin@example.com"}).execute
 ```
 
+The zero-argument form supports fluent construction:
+
+```crystal
+Lustra::SQL.insert.into(:users)
+  .values({email: "admin@example.com"})
+  .execute
+```
+
 ## Values
 
 You can pass values when building the query, or call `values` later.
@@ -103,3 +111,17 @@ Use `Lustra::SQL.unsafe` only for trusted SQL expressions.
 ```crystal
 Lustra::SQL.insert_into(:events, {created_at: Lustra::SQL.unsafe("NOW()")}).execute
 ```
+
+## Row Alignment and Connections
+
+Rows in one insert must have the same keys. Lustra aligns values by the first row's column names, even when later hashes use a different key order. Missing or extra keys raise `Lustra::SQL::QueryBuildingError`.
+
+`execute`, `execute_and_count`, and `fetch` use the query's selected connection unless an explicit connection argument overrides it:
+
+```crystal
+affected = Lustra::SQL.insert_into(:events, {name: "imported"})
+  .use_connection("analytics")
+  .execute_and_count
+```
+
+`execute_and_count` returns an affected-row count. Unlike model-level typed `returning`, the low-level `.returning(...)` method accepts a trusted SQL fragment.

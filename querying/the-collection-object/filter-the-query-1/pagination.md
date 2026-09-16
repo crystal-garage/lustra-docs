@@ -69,6 +69,12 @@ posts = base
   .paginate(page: page, per_page: per_page)
 ```
 
+## Input Boundaries
+
+`paginate` accepts `Int32` page numbers and page sizes. Page sizes must be positive: zero or negative sizes raise `ArgumentError` before counting or modifying the query. Page numbers below one are clamped to page one.
+
+Offsets and page calculations use Int64 integer arithmetic, so large valid inputs do not overflow during Int32 multiplication. This does not make large SQL offsets inexpensive; PostgreSQL still has to process the skipped rows.
+
 ## Page Bounds
 
 Applications can use `out_of_bounds?` to detect a page past the end.
@@ -99,7 +105,9 @@ You can still use `limit` and `offset` directly when you do not need pagination
 metadata:
 
 ```crystal
-offset = (page - 1) * per_page
+raise ArgumentError.new("Page size must be positive") unless per_page > 0
+page = {1, page}.max
+offset = (page.to_i64 - 1) * per_page.to_i64
 
 posts = Post
   .query

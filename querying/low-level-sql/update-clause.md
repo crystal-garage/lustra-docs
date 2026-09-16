@@ -73,3 +73,18 @@ User.query
   .set(archived: true)
   .execute_and_count
 ```
+
+## Returning Values
+
+Use `execute_returning` to get updated columns as typed tuples:
+
+```crystal
+rows = Lustra::SQL.update(:users).set(active: false)
+  .where(id: 10)
+  .execute_returning({id: Int64, email: String})
+# => Array(Tuple(Int64, String))
+```
+
+Types must match the PostgreSQL result columns. Tuple values follow the declared column order; returned row order is not guaranteed. No matching rows produces an empty array.
+
+For raw hashes, use `.returning("id, email").fetch` with a block instead.

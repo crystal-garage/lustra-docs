@@ -122,3 +122,28 @@ end
 ```
 
 `after_commit` raises if it is called outside a transaction.
+
+## Savepoint Callbacks
+
+Rolling back a savepoint discards `after_commit` callbacks registered inside it. Callbacks registered before that savepoint remain scheduled. Callbacks from a released nested savepoint are also discarded if an enclosing savepoint rolls back.
+
+```crystal
+calls = [] of String
+
+Lustra::SQL.transaction do
+  Lustra::SQL.after_commit { |_connection| calls << "outer" }
+
+  Lustra::SQL.with_savepoint do
+    Lustra::SQL.after_commit { |_connection| calls << "inner" }
+    Lustra::SQL.rollback
+  end
+end
+
+calls # => ["outer"]
+```
+
+## Failed Transactions
+
+A failed `BEGIN` clears Lustra's transaction state so a later transaction can start normally. Connection loss does not cause Lustra to replay the transaction block.
+
+Lustra does not automatically retry serialization failures. When using `RepeatableRead` or `Serializable`, any retry must start the whole transaction again, including its reads. Application code must account for side effects outside the database when deciding whether a retry is safe.
