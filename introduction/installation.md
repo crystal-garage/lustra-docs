@@ -1,5 +1,7 @@
 # Setup
 
+Lustra requires Crystal 1.21.0 or newer.
+
 ## Setup: In an existing project
 
 ```text
@@ -7,12 +9,12 @@ $ crystal init app <yourappname>
 $ cd <yourappname>
 ```
 
-### In `shards.yml`
+### In `shard.yml`
 
-Add Lustra to the dependencies list in `shards.yml`:
+Add Lustra to the dependencies list in `shard.yml`:
 
 {% tabs %}
-{% tab title="/shards.yml" %}
+{% tab title="/shard.yml" %}
 ```yaml
 dependencies:
   lustra:
