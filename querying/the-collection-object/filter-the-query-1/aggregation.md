@@ -24,11 +24,13 @@ When the query contains `limit`, `offset`, or `group_by`, Lustra wraps the query
 ```crystal
 max_id = User.query.max("id", Int64)
 min_id = User.query.min("id", Int64)
-average_id = User.query.avg("id", Float64)
+average_id = User.query.avg("id", PG::Numeric).to_f
 total_ids = User.query.sum("id")
 ```
 
 `min`, `max`, and `avg` require the expected return type. `sum(field)` returns `Float64`; `sum(field, Type)` returns the requested type.
+
+The return type must match the database result. For integer columns, `avg` returns `PG::Numeric`; call `to_f` on the result when you need a `Float64`.
 
 `sum` does not sanitize the `field` input, so pass trusted SQL fragments only.
 
