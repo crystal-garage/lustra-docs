@@ -98,12 +98,12 @@ end
 
 In this example, the second user is rolled back to the savepoint, while the first and third users can still be committed.
 
-You can name a savepoint when you need to target it explicitly.
+Use the `sp_name:` keyword to name a savepoint. `rollback` rolls back the current savepoint; it does not select a savepoint by name.
 
 ```crystal
-Lustra::SQL.with_savepoint(:before_import) do
+Lustra::SQL.with_savepoint(sp_name: :before_import) do
   User.create!(email: "imported@example.com")
-  Lustra::SQL.rollback(:before_import)
+  Lustra::SQL.rollback
 end
 ```
 
