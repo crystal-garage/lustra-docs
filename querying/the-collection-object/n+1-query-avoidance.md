@@ -66,6 +66,20 @@ end
 
 The cache belongs to the collection/model instances involved in that fetch. It is not a global cache.
 
+Executing the same eager-loaded query again creates a fresh association cache for that fetch:
+
+```crystal
+query = User.query.where(id: user.id).with_posts
+before = query.to_a.first
+
+post = Post.create!(user_id: user.id, title: "New post")
+after = query.to_a.first
+
+after.posts.map(&.id).includes?(post.id) # => true
+```
+
+Models returned by an earlier fetch keep their earlier association cache. In this example, `before.posts` does not include the new post. Fetch again when you need current association data.
+
 Use `dup` for independent query branches. Eager-loading helpers attached to the base query are preserved, and each copy loads associations using its own filters and cache:
 
 ```crystal
