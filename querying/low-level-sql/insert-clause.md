@@ -96,10 +96,11 @@ Lustra::SQL.insert_into(:users, {email: "admin@example.com", visits: 1})
   .execute
 ```
 
-`on_conflict` also accepts an expression block for partial-index style conditions.
+`on_conflict` also accepts an expression block for partial-index conditions. Supply the column or expression target before adding the predicate:
 
 ```crystal
 Lustra::SQL.insert_into(:users, {email: "admin@example.com"})
+  .on_conflict("(email)")
   .on_conflict { active == true }
   .do_nothing
 ```
