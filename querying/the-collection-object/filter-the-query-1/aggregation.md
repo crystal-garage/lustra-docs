@@ -48,6 +48,36 @@ total_post_ids = Post.query.where(published: true).sum("id", Int64)
 
 The type must match PostgreSQL's aggregate result type. The typed overload returns zero when there are no matching values.
 
+## Source Expressions and Selected Aliases
+
+`sum`, `min`, `max`, and `avg` wrap queries containing a selection, `distinct`, `group_by`, `limit`, or `offset` in a subquery. Ordering is preserved so the aggregate uses the intended rows.
+
+Pass `Lustra::SQL::Column` when the expression refers to a source table:
+
+```crystal
+query = User.query.order_by(:id).limit(10)
+total_ids = query.sum(Lustra::SQL::Column.new("users.id"))
+```
+
+Lustra evaluates the expression inside the source query before aggregating the result. The expression must be valid in that query, including its grouping constraints. String expressions remain trusted SQL fragments; `SQL::Column` does not sanitize them.
+
+Pass a string when aggregating a selected result column or alias:
+
+```crystal
+query = User.query.select("id * 2 AS doubled_id").order_by(:id).limit(10)
+total = query.sum("doubled_id")
+```
+
+In a wrapped query, a qualified string such as `"users.id"` is evaluated outside the source query, where the original table is no longer in scope. Use `SQL::Column` for that reference.
+
+With plain `DISTINCT`, source expressions passed as `SQL::Column` raise `Lustra::SQL::QueryBuildingError`, because adding a projection could change which rows are distinct. Aggregate a selected column or alias as a string instead:
+
+```crystal
+total = User.query.select("id").distinct.sum("id")
+```
+
+This restriction does not apply to `DISTINCT ON`.
+
 ## Custom Aggregates
 
 Use `agg` for custom aggregate expressions:
