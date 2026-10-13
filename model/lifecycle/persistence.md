@@ -110,6 +110,16 @@ user.modified? # => true
 
 ## Direct Updates and Dirty Tracking
 
+`update_column` and `update_columns` apply the column's converter before writing to PostgreSQL. For example, a `JSON::Any` column accepts a Crystal hash without manual serialization:
+
+```crystal
+user = User.find!(1)
+user.update_column(:notification_preferences, {"email" => true})
+user.update_columns(notification_preferences: {"email" => false})
+```
+
+These methods skip validations, callbacks, and automatic timestamp updates. The converter normalizes the assigned value with `to_column` and serializes it with `to_db`.
+
 `update_column`, `update_columns`, `increment!`, and `decrement!` clear dirty state only for the attributes they write. Unrelated pending edits remain available for a later save.
 
 ```crystal
