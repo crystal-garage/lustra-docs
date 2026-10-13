@@ -102,6 +102,6 @@ if User.query.where(active: true).exists?
 end
 ```
 
-`exists?` always queries the database. It is useful when you want a direct existence check instead of loading records.
+`exists?` checks the database without loading models, except when the query has `LIMIT 0`: it returns `false` without executing SQL.
 
 `count` and `exists?` have different costs: `count` asks for row cardinality, while `exists?` only checks that at least one row matches.
