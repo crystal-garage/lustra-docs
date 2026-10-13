@@ -58,6 +58,8 @@ Lustra sets the relation foreign key and saves the appended record.
 
 ## Autosave
 
+Save the parent before building records through the association, because the collection needs its primary key.
+
 By default, `build` creates an unsaved child record and does not save it when
 the parent is saved.
 
@@ -68,7 +70,7 @@ class Author
   has_many books : Book
 end
 
-author = Author.new({name: "Ada Lovelace"})
+author = Author.create!({name: "Ada Lovelace"})
 author.books.build({title: "Draft"})
 author.save!
 
@@ -84,7 +86,7 @@ class Author
   has_many books : Book, autosave: true
 end
 
-author = Author.new({name: "Ada Lovelace"})
+author = Author.create!({name: "Ada Lovelace"})
 author.books.build({title: "Draft"})
 author.save!
 

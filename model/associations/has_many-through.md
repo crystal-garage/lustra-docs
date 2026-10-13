@@ -94,6 +94,8 @@ Call `unlink` on the relation collection (`book.orders`), not on a plain
 
 ## Autosave
 
+Save the parent before building records through the association, because the collection needs its primary key.
+
 By default, `build` creates an unsaved associated record and does not save it
 when the parent is saved.
 
@@ -110,7 +112,7 @@ class Book
   has_many orders : Order, through: BookOrder, autosave: true
 end
 
-book = Book.new({title: "Lustra guide"})
+book = Book.create!({title: "Lustra guide"})
 book.orders.build({status: "draft", date_submitted: Time.local})
 book.save!
 
