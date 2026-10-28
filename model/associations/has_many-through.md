@@ -122,26 +122,50 @@ book.orders.count # => 1
 Autosave applies to records built through the association collection. Appending
 with `<<` still saves or links the appended record immediately.
 
-## `DISTINCT` and Advanced Queries
+## `DISTINCT` and Ordering
 
-`has_many through` queries use `DISTINCT` to avoid returning the same target
-record more than once when the join table can match multiple rows.
+`has_many through` queries use `DISTINCT ON` the target model's primary key to
+avoid returning the same target record more than once when the join table
+matches multiple rows.
 
-For normal association reads, keep the default:
+Keep this default when ordering by selected target columns or selected aliases.
+Lustra chooses one row per target, then applies the requested result ordering
+and pagination. You do not need `clear_distinct` for this:
 
 ```crystal
-book.orders.each do |order|
-  puts order.status
-end
+orders = book.orders
+  .order_by("orders.date_submitted", :desc)
+  .order_by("orders.id", :asc)
+  .paginate(1, 20)
 ```
 
-For advanced queries, you may need to remove that `DISTINCT` clause before
-adding custom select fields, grouping, or ordering.
+For a computed ordering expression, select it with a unique alias and order by
+that alias:
 
 ```crystal
-orders = book
-  .orders
+orders = book.orders
+  .select("LENGTH(orders.status) AS status_length")
+  .order_by(:status_length, :desc)
+  .order_by("orders.id", :asc)
+```
+
+This automatic rewrite supports ordering by projected target columns and
+selected aliases; it does not cover every raw SQL ordering expression.
+
+Calling `distinct` or `distinct(...)` explicitly opts out of the automatic
+rewrite. An explicit `distinct("orders.id")` follows PostgreSQL's normal
+`DISTINCT ON` rule: its expressions must match the initial `ORDER BY`
+expressions.
+
+### Removing Distinctness Deliberately
+
+Use `clear_distinct` when you want the joined rows without automatic target
+deduplication, or when your query handles deduplication itself through grouping:
+
+```crystal
+orders = book.orders
   .clear_distinct
+  .clear_select
   .select(
     "orders.*",
     "COUNT(book_orders.id) AS books_count"
@@ -150,9 +174,9 @@ orders = book
   .order_by("books_count", :desc)
 ```
 
-Use `clear_distinct` deliberately. If the join can produce duplicate target
-rows, removing `DISTINCT` allows those duplicates to appear unless your query
-handles them with grouping or another condition.
+If the join can produce duplicate target rows, removing `DISTINCT` allows those
+duplicates to appear unless your query handles them with grouping or another
+condition.
 
 ## Eager Loading
 
