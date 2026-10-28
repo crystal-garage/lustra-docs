@@ -71,6 +71,22 @@ admins.to_sql # active admins
 
 Queries can be duplicated before or after attaching generated `with_*` eager-loading helpers. Each copy has an independent hook list and association cache; eager loading uses that copy's filters.
 
+## Inspecting SQL
+
+Use `to_sql` to render a collection as a SQL string:
+
+```crystal
+puts User.query.where(active: true).to_sql
+```
+
+For some ordered `has_many through` queries with raw SQL projections, `to_sql`
+needs a live database connection to resolve output column names. PostgreSQL
+must be able to resolve the referenced tables and columns, even when you only
+want the SQL string.
+
+Lustra uses PostgreSQL's describe protocol for this metadata lookup. It does
+not execute the query or its CTEs, load records, or apply writes.
+
 ## Terminal Helpers
 
 Terminal helpers execute the query or derive a result from it:
@@ -86,11 +102,10 @@ Terminal helpers execute the query or derive a result from it:
 | `any?` / `empty?` | Checks whether at least one row exists. |
 | `count` | Runs a count query unless the collection already has a cached result. |
 
-Terminal helpers are the boundary where SQL is sent to PostgreSQL. Helpers that
-temporarily add a projection, filter, ordering, limit, or offset restore the
-collection query before returning. A collection can therefore be reused after
-`any?`, `empty?`, `pluck`, `first`, `last`, `find`, `find_by`, or array-style
-access without retaining those temporary changes.
+Helpers that temporarily add a projection, filter, ordering, limit, or offset
+restore the collection query before returning. A collection can therefore be
+reused after `any?`, `empty?`, `pluck`, `first`, `last`, `find`, `find_by`, or
+array-style access without retaining those temporary changes.
 
 ## Cached Results
 
