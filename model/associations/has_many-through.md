@@ -157,6 +157,31 @@ rewrite. An explicit `distinct("orders.id")` follows PostgreSQL's normal
 `DISTINCT ON` rule: its expressions must match the initial `ORDER BY`
 expressions.
 
+### Unique Output Names
+
+When Lustra applies the automatic ordering rewrite, selected columns must have
+unique output names. Duplicate names raise `Lustra::SQL::QueryBuildingError`
+before records are loaded, because they could overwrite the target model's
+attributes.
+
+The association already selects `orders.*`. Adding `book_orders.id` would
+therefore select two columns named `id`. Give the additional column a unique
+alias:
+
+```crystal
+book.orders
+  .select("book_orders.id AS book_order_id")
+  .order_by("orders.date_submitted", :desc)
+  .each(fetch_columns: true) do |order|
+    puts order.id
+    puts order.attributes["book_order_id"]
+  end
+```
+
+This also applies to aliases written without `AS` and overlapping wildcard
+selections such as `book_orders.*`. Select the needed joined columns with
+unique aliases instead of adding a wildcard that repeats target column names.
+
 ### Removing Distinctness Deliberately
 
 Use `clear_distinct` when you want the joined rows without automatic target
