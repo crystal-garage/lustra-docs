@@ -4,7 +4,7 @@ Collections expose common SQL aggregate helpers.
 
 ## Count
 
-`count` returns the number of matching rows:
+`count` returns the number of rows produced by the collection's `SELECT` query:
 
 ```crystal
 user_count = User.query.count
@@ -17,7 +17,37 @@ You can choose the return type:
 count = User.query.count(Int32)
 ```
 
-When the query contains `limit`, `offset`, or `group_by`, Lustra wraps the query in a subquery so the count applies to the filtered result set.
+Lustra counts a wrapped copy of the full query. The selection, `distinct`,
+`group_by`, `having`, `limit`, and `offset` all affect the result being counted.
+For example, a grouped query counts groups, and a distinct selection counts
+unique selected rows:
+
+```crystal
+user_groups = Post.query.select(:user_id).group_by(:user_id).count
+# => 3_i64, if posts form 3 user_id groups
+
+unique_emails = User.query.select(:email).distinct.count
+# => 20_i64, if users have 20 distinct email values
+
+page_size = User.query.order_by(:id).limit(10).offset(20).count
+# => 5_i64, if there are 25 users (20 skipped, 5 remaining)
+```
+
+`page_size` is at most 10; it counts only the rows remaining after the offset
+and limit.
+
+An aggregate selection without grouping or `HAVING` produces one result row,
+even when no source rows match. Counting that query therefore returns 1:
+
+```crystal
+result_rows = User.query.select("COUNT(*) AS total").count # => 1
+```
+
+Use `User.query.count` directly when you want the number of users.
+
+Ordering is preserved when it affects which rows are selected, including
+limits, offsets, and `DISTINCT ON`. Ordinary unpaginated counts omit unnecessary
+ordering.
 
 ## Min, Max, Avg, and Sum
 
