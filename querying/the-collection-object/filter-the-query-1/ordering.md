@@ -65,8 +65,17 @@ Post.query.in_order_of(:status, ["open", "waiting", "closed"]).each do |post|
 end
 ```
 
-It appends a `CASE` expression to the current `ORDER BY` list and keeps items
-not in the list after those values.
+For a nonempty list, it appends a `CASE` expression to the current `ORDER BY`
+list and keeps items not in the list after those values.
+
+An empty value list leaves the query unchanged, including any existing
+ordering:
+
+```crystal
+query = Post.query.order_by(:id, :desc)
+query.in_order_of(:status, [] of String)
+# Ordering remains: ORDER BY "id" DESC
+```
 
 ```crystal
 Post.query
