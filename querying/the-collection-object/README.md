@@ -79,10 +79,10 @@ Use `to_sql` to render a collection as a SQL string:
 puts User.query.where(active: true).to_sql
 ```
 
-For some ordered `has_many through` queries with raw SQL projections, `to_sql`
-needs a live database connection to resolve output column names. PostgreSQL
-must be able to resolve the referenced tables and columns, even when you only
-want the SQL string.
+For some ordered `has_many through` queries with raw SQL selections or
+source-expression ordering, `to_sql` needs a live database connection to resolve
+output column names. PostgreSQL must be able to resolve the referenced tables
+and columns, even when you only want the SQL string.
 
 Lustra uses PostgreSQL's describe protocol for this metadata lookup. It does
 not execute the query or its CTEs, load records, or apply writes.

@@ -96,9 +96,17 @@ Lustra registers converters for common PostgreSQL-backed Crystal types:
 | `UUID` | `uuid` |
 | `JSON::Any` | `json`, `jsonb` |
 | `Time` | timestamp/date-compatible values supported by the converter |
+| `PG::Range(Int32)` | `int4range` |
+| `PG::Range(Int64)` | `int8range` |
+| `PG::Range(BigDecimal)`, `PG::Range(PG::Numeric)` | `numrange` |
+| `PG::Range(Time)` | `tsrange`, `tstzrange` |
 | `Array(Bool)`, `Array(String)`, `Array(Float32)`, `Array(Float64)`, `Array(Int32)`, `Array(Int64)` | PostgreSQL array columns |
 
 Extensions register additional converters, such as enums, BCrypt passwords, time-in-day values, intervals, full-text search vectors, and PostgreSQL geometric types.
+
+Range columns preserve empty values, unbounded ends, and both bound inclusivity
+flags. See [PostgreSQL Range Types](../../additional-and-advanced-features/range-types.md)
+for declarations, accepted inputs, queries, and SQL `NULL` handling.
 
 ## BigDecimal and Numeric
 

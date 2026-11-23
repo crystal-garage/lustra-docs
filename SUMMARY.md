@@ -69,6 +69,7 @@
 
 * [JSONB](additional-and-advanced-features/jsonb.md)
 * [Array Querying](additional-and-advanced-features/array-querying.md)
+* [PostgreSQL Range Types](additional-and-advanced-features/range-types.md)
 * [Symbol vs String](additional-and-advanced-features/symbol-vs-string.md)
 * [Enums](additional-and-advanced-features/enums.md)
 * [BCrypt](additional-and-advanced-features/bcrypt.md)

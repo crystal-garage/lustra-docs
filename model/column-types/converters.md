@@ -84,6 +84,13 @@ end
 
 Converter lookup happens at compile time. If a converter is missing, Lustra raises a compile-time error explaining that no converter was found for the requested type/name.
 
+## Built-In Range Converters
+
+`PG::Range` columns have built-in converters for integer, numeric, and timestamp
+bounds; they do not need a custom converter. See
+[PostgreSQL Range Types](../../additional-and-advanced-features/range-types.md)
+for supported types and the distinction between an empty range and SQL `NULL`.
+
 ## JSON Serializable Converter
 
 For JSON serializable types, Lustra can generate a converter:

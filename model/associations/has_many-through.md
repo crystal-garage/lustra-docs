@@ -139,7 +139,15 @@ orders = book.orders
   .paginate(1, 20)
 ```
 
-For a computed ordering expression, select it with a unique alias and order by
+Computed source expressions can be used directly for ordering:
+
+```crystal
+orders = book.orders
+  .order_by("LENGTH(orders.status)", :desc)
+  .order_by("orders.id", :asc)
+```
+
+To also fetch the computed value, select it with a unique alias and order by
 that alias:
 
 ```crystal
@@ -149,8 +157,24 @@ orders = book.orders
   .order_by("orders.id", :asc)
 ```
 
-This automatic rewrite supports ordering by projected target columns and
-selected aliases; it does not cover every raw SQL ordering expression.
+Correlated scalar subqueries are also supported. For example, order targets
+by their latest join-row ID:
+
+```crystal
+orders = book.orders
+  .order_by("(SELECT MAX(links.id) FROM book_orders links WHERE links.order_id = orders.id)", :desc, :nulls_last)
+  .order_by("orders.id", :asc)
+  .paginate(1, 20)
+```
+
+The expression is evaluated in the source query's scope before deduplication;
+result ordering and pagination are applied afterward. It does not appear in
+model attributes unless you explicitly select it. `pluck` and `pluck_col` also
+preserve this ordering and deduplication while returning the requested fields.
+
+Expressions must be valid against the source query's tables, joins, and
+`GROUP BY` constraints. Treat string expressions as trusted SQL; do not
+interpolate untrusted input.
 
 Calling `distinct` or `distinct(...)` explicitly opts out of the automatic
 rewrite. An explicit `distinct("orders.id")` follows PostgreSQL's normal
